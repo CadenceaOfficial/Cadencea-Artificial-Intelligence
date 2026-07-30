@@ -466,3 +466,11 @@ themeToggle.addEventListener("click", () => {
     }
 
 });
+// Auto focus message box when app opens
+window.addEventListener("load", () => {
+
+    setTimeout(() => {
+        input.focus();
+    }, 500);
+
+});
