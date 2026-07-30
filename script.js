@@ -414,13 +414,22 @@ onAuthStateChanged(
             );
 
 
-            welcome.style.display = "none";
+            const userPhoto = document.getElementById("userPhoto");
+
+if (userPhoto && user.photoURL) {
+
+    userPhoto.src = user.photoURL;
+
+}
 
 
-            currentUserId = user.uid;
+welcome.style.display = "none";
 
 
-            loadOldChats();
+currentUserId = user.uid;
+
+
+loadOldChats();
 
 
         }
