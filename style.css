@@ -122,6 +122,38 @@ body {
 
 
 
+/* Google Profile Photo */
+
+.profile {
+
+    width: 52px;
+    height: 52px;
+
+    border-radius: 50%;
+
+    overflow: hidden;
+
+    border: 2px solid var(--border-color);
+
+    flex-shrink: 0;
+
+}
+
+
+.profile img {
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    object-position: center;
+
+    display: block;
+
+}
+
+
 
 /* Header */
 
@@ -689,64 +721,64 @@ button:hover {
    Mobile Responsive Layout
 ========================= */
 
-@media(max-width:700px){
+@media(max-width:700px) {
 
-    header{
+    header {
 
-        padding:15px 20px;
-        gap:10px;
-
-    }
-
-
-    header h1{
-
-        font-size:19px;
+        padding: 15px 20px;
+        gap: 10px;
 
     }
 
 
-    header p{
+    header h1 {
 
-        font-size:12px;
-
-    }
-
-
-    .profile{
-
-        width:42px;
-        height:42px;
+        font-size: 19px;
 
     }
 
 
-    #themeToggle{
+    header p {
 
-        width:42px;
-        height:42px;
-        font-size:18px;
+        font-size: 12px;
 
     }
 
 
-    main{
+    .profile {
 
-        padding:20px;
-
-    }
-
-
-    .message{
-
-        max-width:85%;
+        width: 42px;
+        height: 42px;
 
     }
 
 
-    .welcome-box{
+    #themeToggle {
 
-        width:90%;
+        width: 42px;
+        height: 42px;
+        font-size: 18px;
+
+    }
+
+
+    main {
+
+        padding: 20px;
+
+    }
+
+
+    .message {
+
+        max-width: 85%;
+
+    }
+
+
+    .welcome-box {
+
+        width: 90%;
 
     }
 
@@ -760,117 +792,117 @@ button:hover {
    Small Phone Layout
 ========================= */
 
-@media(max-width:480px){
+@media(max-width:480px) {
 
     html,
-    body{
+    body {
 
-        height:100%;
-        overflow:hidden;
-
-    }
-
-
-    .app{
-
-        height:100dvh;
+        height: 100%;
+        overflow: hidden;
 
     }
 
 
-    header{
+    .app {
 
-        height:60px;
-        padding:10px 12px;
-        gap:10px;
+        height: 100dvh;
 
     }
 
 
-    .profile{
+    header {
 
-        width:36px;
-        height:36px;
-
-    }
-
-
-    header h1{
-
-        font-size:16px;
+        height: 60px;
+        padding: 10px 12px;
+        gap: 10px;
 
     }
 
 
-    header p{
+    .profile {
 
-        font-size:11px;
-
-    }
-
-
-    #themeToggle{
-
-        width:36px;
-        height:36px;
-        font-size:16px;
+        width: 36px;
+        height: 36px;
 
     }
 
 
-    main{
+    header h1 {
 
-        flex:1;
-        min-height:0;
-        padding:15px;
-        gap:12px;
-        overflow-y:auto;
+        font-size: 16px;
 
     }
 
 
-    .message{
+    header p {
 
-        max-width:90%;
-        padding:12px 15px;
-        font-size:14px;
-        line-height:1.5;
+        font-size: 11px;
 
     }
 
 
-    footer{
+    #themeToggle {
 
-        width:100%;
-        padding:8px;
-        gap:5px;
-        flex-shrink:0;
-        display:flex;
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
 
     }
 
 
-    footer button{
+    main {
 
-        width:34px;
-        height:34px;
-        min-width:34px;
-        flex-shrink:0;
-        font-size:14px;
-        border-radius:10px;
+        flex: 1;
+        min-height: 0;
+        padding: 15px;
+        gap: 12px;
+        overflow-y: auto;
 
     }
 
 
-    textarea{
+    .message {
 
-        flex:1;
-        min-width:0;
-        width:auto;
-        height:38px;
-        padding:8px;
-        font-size:13px;
-        border-radius:14px;
+        max-width: 90%;
+        padding: 12px 15px;
+        font-size: 14px;
+        line-height: 1.5;
+
+    }
+
+
+    footer {
+
+        width: 100%;
+        padding: 8px;
+        gap: 5px;
+        flex-shrink: 0;
+        display: flex;
+
+    }
+
+
+    footer button {
+
+        width: 34px;
+        height: 34px;
+        min-width: 34px;
+        flex-shrink: 0;
+        font-size: 14px;
+        border-radius: 10px;
+
+    }
+
+
+    textarea {
+
+        flex: 1;
+        min-width: 0;
+        width: auto;
+        height: 38px;
+        padding: 8px;
+        font-size: 13px;
+        border-radius: 14px;
 
     }
 
