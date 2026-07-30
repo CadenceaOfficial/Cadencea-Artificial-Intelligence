@@ -4,10 +4,12 @@ import {
     auth,
     googleProvider
 } from "./firebase.js";
+
 import {
     onAuthStateChanged,
     signInWithPopup
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+
 import {
     collection,
     addDoc,
@@ -20,111 +22,118 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
 
-// Your Start Chatting button code below
+// Elements
 const welcome = document.getElementById("welcome");
 const chat = document.getElementById("chat");
 const input = document.getElementById("prompt");
 const send = document.getElementById("send");
-let currentUserId = null;
 const googleLogin = document.getElementById("googleLogin");
 
 
-googleLogin.addEventListener(
-    "click",
-    async () => {
-
-        try {
-
-            const result = await signInWithPopup(
-                auth,
-                googleProvider
-            );
-
-
-            const user = result.user;
-
-
-            console.log("Logged in user:", user);
+let currentUserId = null;
 
 
 
-            await setDoc(
-                doc(db, "Users", user.uid),
-                {
-                    name: user.displayName,
-                    email: user.email,
-                    photo: user.photoURL,
-                    createdAt: serverTimestamp()
-                },
-                {
-                    merge: true
-                }
-            );
+// Google Login
+
+googleLogin.addEventListener("click", async () => {
+
+    try {
+
+        const result = await signInWithPopup(
+            auth,
+            googleProvider
+        );
+
+        const user = result.user;
 
 
-            currentUserId = user.uid;
+        await setDoc(
+            doc(db, "Users", user.uid),
+            {
+                name: user.displayName,
+                email: user.email,
+                photo: user.photoURL,
+                createdAt: serverTimestamp()
+            },
+            {
+                merge:true
+            }
+        );
+
+
+        currentUserId = user.uid;
+
+
+        welcome.style.display = "none";
+
+
+        addMessage(
+            `Welcome ${user.displayName}! 👋 How can I help you?`,
+            "ai"
+        );
+
+
+    }
+
+    catch(error){
+
+        console.error(
+            "Google login error:",
+            error
+        );
+
+    }
+
+});
 
 
 
 
+// Add message
 
-            welcome.style.display = "none";
-
-
-            addMessage(
-                `Welcome ${user.displayName}! 👋 How can I help you?`,
-                "ai"
-            );
-
-
-            saveMessage(
-                `Welcome ${user.displayName}! 👋 How can I help you?`,
-                "ai"
-            );
-
-
-        }
-        catch (error) {
-
-            console.error(
-                "Google login error:",
-                error
-            );
-
-        }
-
-    });
-// Add message to chat
-function addMessage(text, type) {
+function addMessage(text,type){
 
     const message = document.createElement("div");
+
 
     message.classList.add(
         "message",
         type
     );
 
+
     message.innerText = text;
+
 
     chat.appendChild(message);
 
 
-    // Auto scroll
     chat.scrollTop = chat.scrollHeight;
 
 }
-// Save chat message to Firestore
-async function saveMessage(text, sender) {
 
-    if (!currentUserId) return;
+
+
+
+// Save chat
+
+async function saveMessage(text,sender){
+
+    if(!currentUserId) return;
 
 
     await addDoc(
-        collection(db, "Users", currentUserId, "Chats"),
+        collection(
+            db,
+            "Users",
+            currentUserId,
+            "Chats"
+        ),
         {
-            text: text,
-            sender: sender,
-            time: serverTimestamp()
+            text:text,
+            sender:sender,
+            time:serverTimestamp()
         }
     );
 
@@ -132,16 +141,21 @@ async function saveMessage(text, sender) {
 
 
 
-// Fake AI response (temporary)
 
-async function aiReply(userPrompt) {
+
+// REAL AI RESPONSE
+
+async function aiReply(userPrompt){
+
 
     const typing = document.createElement("div");
+
 
     typing.classList.add(
         "message",
         "ai"
     );
+
 
     typing.innerHTML = `
     <div class="typing">
@@ -151,91 +165,155 @@ async function aiReply(userPrompt) {
     </div>
     `;
 
+
     chat.appendChild(typing);
+
 
     chat.scrollTop = chat.scrollHeight;
 
 
-    try {
+
+    try{
+
 
         const response = await fetch(
-    "https://cadence-ai-backend.cadenceaofficial-ai.workers.dev",            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
+
+            "https://cadence-ai-backend.cadenceaofficial-ai.workers.dev",
+
+            {
+
+                method:"POST",
+
+                headers:{
+                    "Content-Type":"application/json"
                 },
-                body: JSON.stringify({
-                    prompt: userPrompt
+
+                body:JSON.stringify({
+                    prompt:userPrompt
                 })
+
             }
+
         );
+
 
 
         const data = await response.json();
 
 
+
         typing.remove();
 
 
+
+        let reply = data.reply;
+
+
+
+        // If Gemini returns JSON accidentally
+        try{
+
+            const parsed = JSON.parse(reply);
+
+            reply =
+            parsed.candidates?.[0]
+            ?.content
+            ?.parts?.[0]
+            ?.text || reply;
+
+        }
+
+        catch(e){}
+
+
+
+
         addMessage(
-            data.reply,
+            reply,
             "ai"
         );
 
 
         saveMessage(
-            data.reply,
+            reply,
             "ai"
         );
 
 
-    } catch(error) {
+    }
+
+
+    catch(error){
+
 
         typing.remove();
+
 
         addMessage(
             "Sorry, I couldn't connect to my AI brain.",
             "ai"
         );
 
+
         console.error(error);
 
     }
 
+
 }
 
-   
+
+
+
+
 // Send message
 
-function sendMessage() {
-
-    const text = input.value.trim();
+function sendMessage(){
 
 
-    if (text === "") return;
+    const text=input.value.trim();
+
+
+    if(text==="") return;
+
 
 
     addMessage(
         text,
         "user"
     );
-    saveMessage(text, "user");
 
 
-    input.value = "";
+    saveMessage(
+        text,
+        "user"
+    );
+
+
+
+    input.value="";
 
 
     aiReply(text);
 
+
 }
-async function loadOldChats() {
-
-    console.log("Loading chats for:", currentUserId);
-
-    if (!currentUserId) return;
 
 
-    const chatsRef = collection(
+
+
+
+// Load old chats
+
+async function loadOldChats(){
+
+
+    if(!currentUserId) return;
+
+
+
+    const chatsRef =
+    collection(
         db,
         "Users",
         currentUserId,
@@ -243,18 +321,24 @@ async function loadOldChats() {
     );
 
 
-    const q = query(
+
+    const q =
+    query(
         chatsRef,
         orderBy("time")
     );
 
 
-    const snapshot = await getDocs(q);
+
+    const snapshot =
+    await getDocs(q);
 
 
-    snapshot.forEach((doc) => {
 
-        const data = doc.data();
+    snapshot.forEach((doc)=>{
+
+
+        const data=doc.data();
 
 
         addMessage(
@@ -262,13 +346,17 @@ async function loadOldChats() {
             data.sender
         );
 
+
     });
+
 
 }
 
 
 
-// Button click
+
+
+// Buttons
 
 send.addEventListener(
     "click",
@@ -277,13 +365,16 @@ send.addEventListener(
 
 
 
-// Enter key
-
 input.addEventListener(
     "keydown",
-    function (e) {
+    (e)=>{
 
-        if (e.key === "Enter" && !e.shiftKey) {
+
+        if(
+            e.key==="Enter"
+            &&
+            !e.shiftKey
+        ){
 
             e.preventDefault();
 
@@ -291,31 +382,53 @@ input.addEventListener(
 
         }
 
+
     }
 );
-onAuthStateChanged(auth, (user) => {
 
 
-    if (user) {
-
-        console.log("User already logged in:", user.email);
 
 
-        welcome.style.display = "none";
 
 
-        currentUserId = user.uid;
+// Auth state
+
+onAuthStateChanged(
+auth,
+(user)=>{
+
+
+    if(user){
+
+
+        console.log(
+            "Logged in:",
+            user.email
+        );
+
+
+        welcome.style.display="none";
+
+
+        currentUserId=user.uid;
 
 
         loadOldChats();
 
+
     }
 
-    else {
 
-        console.log("No user logged in");
+    else{
 
-        welcome.style.display = "flex";
+
+        console.log(
+            "No user logged in"
+        );
+
+
+        welcome.style.display="flex";
+
 
     }
 
