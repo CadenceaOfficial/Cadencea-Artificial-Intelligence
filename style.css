@@ -1,3 +1,41 @@
+:root {
+
+    /* Day Mode */
+    --bg-color: #ffffff;
+    --card-color: #f5f7fb;
+    --text-color: #111827;
+    --secondary-text: #6b7280;
+    --user-message: #2563eb;
+    --ai-message: #e5e7eb;
+    --border-color: #d1d5db;
+
+}
+
+
+/* Dark Mode */
+
+body.dark {
+
+    --bg-color: #0f172a;
+    --card-color: #111827;
+    --text-color: #f9fafb;
+    --secondary-text: #9ca3af;
+    --user-message: #2563eb;
+    --ai-message: #1f2937;
+    --border-color: #374151;
+
+}
+
+
+
+body {
+
+    background: var(--bg-color);
+    color: var(--text-color);
+
+    transition: 0.3s ease;
+
+}
 /* Google Font */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
@@ -16,29 +54,34 @@ html,body{
 
 body{
 
-    background:#0b1020;
-    color:white;
-}
+    background:var(--bg-color);
+    color:var(--text-color);
 
+    transition:0.3s ease;
+}
 /* Animated Background */
 
 .background{
 
     position:fixed;
-
     inset:0;
 
     background:
-    radial-gradient(circle at 15% 20%,#3b82f640 0%,transparent 25%),
-    radial-gradient(circle at 85% 25%,#8b5cf650 0%,transparent 25%),
-    radial-gradient(circle at 50% 90%,#06b6d430 0%,transparent 30%),
-    linear-gradient(135deg,#0b1020,#111827,#0f172a);
+    radial-gradient(circle at 15% 20%,rgba(59,130,246,.25),transparent 25%),
+    radial-gradient(circle at 85% 25%,rgba(139,92,246,.25),transparent 25%),
+    linear-gradient(
+        135deg,
+        var(--bg-color),
+        var(--card-color)
+    );
 
     background-size:300% 300%;
 
     animation:bgMove 15s ease infinite;
 
     z-index:-1;
+
+    transition:.3s ease;
 }
 
 @keyframes bgMove{
@@ -104,7 +147,7 @@ header h1{
 
 header p{
 
-    color:#94a3b8;
+    color:var(--secondary-text);
     font-size:14px;
 }
 
@@ -158,20 +201,23 @@ main::-webkit-scrollbar-thumb{
 
     align-self:flex-start;
 
-    background:rgba(255,255,255,.08);
+    background:var(--ai-message);
+
+    color:var(--text-color);
 
     backdrop-filter:blur(20px);
 
-    border:1px solid rgba(255,255,255,.08);
+    border:1px solid var(--border-color);
 }
 
 .user{
 
     align-self:flex-end;
 
-    background:linear-gradient(135deg,#2563eb,#4f46e5);
+    background:var(--user-message);
 
-    box-shadow:0 10px 25px rgba(37,99,235,.3);
+    color:white;
+
 }
 
 @keyframes fade{
@@ -210,29 +256,13 @@ footer{
 
 textarea{
 
-    flex:1;
+    color:var(--text-color);
 
-    resize:none;
+    background:var(--card-color);
 
-    height:56px;
+    border:1px solid var(--border-color);
 
-    border:none;
-
-    outline:none;
-
-    border-radius:18px;
-
-    padding:16px;
-
-    color:white;
-
-    font-size:16px;
-
-    background:rgba(255,255,255,.08);
-
-    backdrop-filter:blur(20px);
 }
-
 textarea::placeholder{
 
     color:#94a3b8;
@@ -242,26 +272,13 @@ textarea::placeholder{
 
 button{
 
-    width:56px;
-    height:56px;
+color:var(--text-color);
 
-    border:none;
+background:var(--card-color);
 
-    cursor:pointer;
+border:1px solid var(--border-color);
 
-    border-radius:18px;
-
-    color:white;
-
-    font-size:20px;
-
-    transition:.25s;
-
-    background:rgba(255,255,255,.08);
-
-    backdrop-filter:blur(20px);
 }
-
 button:hover{
 
     transform:translateY(-3px);
