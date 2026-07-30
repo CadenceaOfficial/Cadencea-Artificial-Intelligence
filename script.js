@@ -46,6 +46,13 @@ googleLogin.addEventListener("click", async () => {
         );
 
         const user = result.user;
+        const userPhoto = document.getElementById("userPhoto");
+
+        if (userPhoto && user.photoURL) {
+
+            userPhoto.src = user.photoURL;
+
+        }
 
 
         await setDoc(
@@ -57,7 +64,7 @@ googleLogin.addEventListener("click", async () => {
                 createdAt: serverTimestamp()
             },
             {
-                merge:true
+                merge: true
             }
         );
 
@@ -76,7 +83,7 @@ googleLogin.addEventListener("click", async () => {
 
     }
 
-    catch(error){
+    catch (error) {
 
         console.error(
             "Google login error:",
@@ -92,7 +99,7 @@ googleLogin.addEventListener("click", async () => {
 
 // Add message
 
-function addMessage(text,type){
+function addMessage(text, type) {
 
     const message = document.createElement("div");
 
@@ -118,9 +125,9 @@ function addMessage(text,type){
 
 // Save chat
 
-async function saveMessage(text,sender){
+async function saveMessage(text, sender) {
 
-    if(!currentUserId) return;
+    if (!currentUserId) return;
 
 
     await addDoc(
@@ -131,9 +138,9 @@ async function saveMessage(text,sender){
             "Chats"
         ),
         {
-            text:text,
-            sender:sender,
-            time:serverTimestamp()
+            text: text,
+            sender: sender,
+            time: serverTimestamp()
         }
     );
 
@@ -145,7 +152,7 @@ async function saveMessage(text,sender){
 
 // REAL AI RESPONSE
 
-async function aiReply(userPrompt){
+async function aiReply(userPrompt) {
 
 
     const typing = document.createElement("div");
@@ -173,7 +180,7 @@ async function aiReply(userPrompt){
 
 
 
-    try{
+    try {
 
 
         const response = await fetch(
@@ -182,14 +189,14 @@ async function aiReply(userPrompt){
 
             {
 
-                method:"POST",
+                method: "POST",
 
-                headers:{
-                    "Content-Type":"application/json"
+                headers: {
+                    "Content-Type": "application/json"
                 },
 
-                body:JSON.stringify({
-                    prompt:userPrompt
+                body: JSON.stringify({
+                    prompt: userPrompt
                 })
 
             }
@@ -211,19 +218,19 @@ async function aiReply(userPrompt){
 
 
         // If Gemini returns JSON accidentally
-        try{
+        try {
 
             const parsed = JSON.parse(reply);
 
             reply =
-            parsed.candidates?.[0]
-            ?.content
-            ?.parts?.[0]
-            ?.text || reply;
+                parsed.candidates?.[0]
+                    ?.content
+                    ?.parts?.[0]
+                    ?.text || reply;
 
         }
 
-        catch(e){}
+        catch (e) { }
 
 
 
@@ -243,7 +250,7 @@ async function aiReply(userPrompt){
     }
 
 
-    catch(error){
+    catch (error) {
 
 
         typing.remove();
@@ -268,13 +275,13 @@ async function aiReply(userPrompt){
 
 // Send message
 
-function sendMessage(){
+function sendMessage() {
 
 
-    const text=input.value.trim();
+    const text = input.value.trim();
 
 
-    if(text==="") return;
+    if (text === "") return;
 
 
 
@@ -291,7 +298,7 @@ function sendMessage(){
 
 
 
-    input.value="";
+    input.value = "";
 
 
     aiReply(text);
@@ -305,40 +312,40 @@ function sendMessage(){
 
 // Load old chats
 
-async function loadOldChats(){
+async function loadOldChats() {
 
 
-    if(!currentUserId) return;
+    if (!currentUserId) return;
 
 
 
     const chatsRef =
-    collection(
-        db,
-        "Users",
-        currentUserId,
-        "Chats"
-    );
+        collection(
+            db,
+            "Users",
+            currentUserId,
+            "Chats"
+        );
 
 
 
     const q =
-    query(
-        chatsRef,
-        orderBy("time")
-    );
+        query(
+            chatsRef,
+            orderBy("time")
+        );
 
 
 
     const snapshot =
-    await getDocs(q);
+        await getDocs(q);
 
 
 
-    snapshot.forEach((doc)=>{
+    snapshot.forEach((doc) => {
 
 
-        const data=doc.data();
+        const data = doc.data();
 
 
         addMessage(
@@ -367,14 +374,14 @@ send.addEventListener(
 
 input.addEventListener(
     "keydown",
-    (e)=>{
+    (e) => {
 
 
-        if(
-            e.key==="Enter"
+        if (
+            e.key === "Enter"
             &&
             !e.shiftKey
-        ){
+        ) {
 
             e.preventDefault();
 
@@ -394,46 +401,46 @@ input.addEventListener(
 // Auth state
 
 onAuthStateChanged(
-auth,
-(user)=>{
+    auth,
+    (user) => {
 
 
-    if(user){
+        if (user) {
 
 
-        console.log(
-            "Logged in:",
-            user.email
-        );
+            console.log(
+                "Logged in:",
+                user.email
+            );
 
 
-        welcome.style.display="none";
+            welcome.style.display = "none";
 
 
-        currentUserId=user.uid;
+            currentUserId = user.uid;
 
 
-        loadOldChats();
+            loadOldChats();
 
 
-    }
+        }
 
 
-    else{
+        else {
 
 
-        console.log(
-            "No user logged in"
-        );
+            console.log(
+                "No user logged in"
+            );
 
 
-        welcome.style.display="flex";
+            welcome.style.display = "flex";
 
 
-    }
+        }
 
 
-});
+    });
 // Theme Toggle
 
 const themeToggle = document.getElementById("themeToggle");
