@@ -326,17 +326,17 @@ main::-webkit-scrollbar-thumb {
 
 
 .message {
-
     max-width: 70%;
-
     padding: 18px 22px;
-
     border-radius: 18px;
-
     line-height: 1.7;
-
     animation: fade .25s ease;
 
+    /* Prevent text from overflowing */
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+    white-space: pre-wrap;
 }
 
 
@@ -715,6 +715,16 @@ button:hover {
 
     border: none;
 
+}
+
+pre {
+    overflow-x: auto;
+    white-space: pre;
+    max-width: 100%;
+}
+
+code {
+    word-break: break-word;
 }
 
 /* =========================
