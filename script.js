@@ -134,27 +134,7 @@ async function saveMessage(text, sender) {
 
 // Fake AI response (temporary)
 
-function aiReply() {
-
-    const replies = [
-
-        "Hello! I am Cadence AI. How can I assist you today?",
-
-        "I'm still learning, but my intelligence module is improving.",
-
-        "That's an interesting question. Let me think about it.",
-
-        "I can help you with coding, ideas, research, and daily tasks.",
-
-        "Soon I will be connected to a real AI model."
-    ];
-
-
-    const random =
-        replies[Math.floor(Math.random() * replies.length)];
-
-
-    // Thinking animation
+async function aiReply(userPrompt) {
 
     const typing = document.createElement("div");
 
@@ -169,32 +149,62 @@ function aiReply() {
         <span></span>
         <span></span>
     </div>
-`;
+    `;
 
     chat.appendChild(typing);
-
 
     chat.scrollTop = chat.scrollHeight;
 
 
+    try {
 
-    setTimeout(() => {
+        const response = await fetch(
+    "https://cadence-ai-backend.cadenceaofficial-ai.workers.dev",            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    prompt: userPrompt
+                })
+            }
+        );
+
+
+        const data = await response.json();
+
+
+        typing.remove();
+
+
+        addMessage(
+            data.reply,
+            "ai"
+        );
+
+
+        saveMessage(
+            data.reply,
+            "ai"
+        );
+
+
+    } catch(error) {
 
         typing.remove();
 
         addMessage(
-            random,
+            "Sorry, I couldn't connect to my AI brain.",
             "ai"
         );
 
-        saveMessage(random, "ai");
-    }, 1200);
+        console.error(error);
 
+    }
 
 }
 
-
-
+   
 // Send message
 
 function sendMessage() {
@@ -215,7 +225,7 @@ function sendMessage() {
     input.value = "";
 
 
-    aiReply();
+    aiReply(text);
 
 }
 async function loadOldChats() {
