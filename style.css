@@ -754,3 +754,197 @@ button:hover {
     object-fit: cover;
 
 }
+/* Mobile Footer Fix */
+
+@media(max-width:700px){
+
+    footer{
+
+        padding:12px;
+
+        gap:8px;
+
+    }
+
+
+    footer button{
+
+        width:42px;
+        height:42px;
+
+        font-size:16px;
+
+        border-radius:14px;
+
+        flex-shrink:0;
+
+    }
+
+
+    textarea{
+
+        height:45px;
+
+        padding:12px;
+
+        font-size:14px;
+
+        min-width:0;
+
+    }
+
+
+    #prompt{
+
+        flex:1;
+
+    }
+
+}
+@media(max-width:700px){
+
+    header{
+
+        padding:15px;
+
+        gap:10px;
+
+    }
+
+
+    .profile{
+
+        width:42px;
+        height:42px;
+
+    }
+
+
+    header h1{
+
+        font-size:18px;
+
+    }
+
+
+    header p{
+
+        font-size:12px;
+
+    }
+
+
+    #themeToggle{
+
+        width:42px;
+        height:42px;
+
+        font-size:18px;
+
+    }
+
+}
+/* Extra Compact Mobile Mode */
+
+@media(max-width:480px){
+
+    header{
+
+        height:60px;
+        padding:10px 12px;
+        gap:10px;
+
+    }
+
+
+    .profile{
+
+        width:36px;
+        height:36px;
+
+    }
+
+
+    header h1{
+
+        font-size:16px;
+
+    }
+
+
+    header p{
+
+        font-size:11px;
+
+    }
+
+
+    #themeToggle{
+
+        width:36px;
+        height:36px;
+
+        font-size:16px;
+
+    }
+
+
+    main{
+
+        padding:15px;
+
+        gap:12px;
+
+    }
+
+
+    .message{
+
+        max-width:90%;
+
+        padding:12px 15px;
+
+        border-radius:15px;
+
+        font-size:14px;
+
+        line-height:1.5;
+
+    }
+
+
+    footer{
+
+        padding:10px;
+
+        gap:6px;
+
+    }
+
+
+    footer button{
+
+        width:38px;
+
+        height:38px;
+
+        border-radius:12px;
+
+        font-size:15px;
+
+    }
+
+
+    textarea{
+
+        height:40px;
+
+        padding:10px;
+
+        font-size:14px;
+
+        border-radius:14px;
+
+    }
+
+}
