@@ -948,3 +948,49 @@ button:hover {
     }
 
 }
+/* Fix mobile chat footer overflow */
+
+@media(max-width:480px){
+
+    footer{
+        width:100%;
+        padding:8px;
+        gap:5px;
+        overflow:hidden;
+    }
+
+
+    footer button{
+
+        width:34px;
+        height:34px;
+
+        min-width:34px;
+
+        flex-shrink:0;
+
+        font-size:14px;
+
+        border-radius:10px;
+
+    }
+
+
+    textarea{
+
+        flex:1;
+
+        width:auto;
+
+        min-width:0;
+
+        height:38px;
+
+        padding:8px;
+
+        font-size:13px;
+
+    }
+
+
+}
