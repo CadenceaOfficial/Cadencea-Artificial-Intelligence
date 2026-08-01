@@ -115,7 +115,27 @@ function addMessage(text, type) {
     );
 
 
-    message.innerText = text;
+    message.innerHTML = marked.parse(text);
+
+    renderMathInElement(message, {
+
+        delimiters: [
+
+            {
+                left: "$$",
+                right: "$$",
+                display: true
+            },
+
+            {
+                left: "$",
+                right: "$",
+                display: false
+            }
+
+        ]
+
+    });
 
 
     chat.appendChild(message);
