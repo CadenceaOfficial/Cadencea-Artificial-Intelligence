@@ -423,7 +423,7 @@ textarea {
 
     resize: none;
 
-    height: 56px;
+    height: 46px;
 
     border-radius: 18px;
 
@@ -524,7 +524,7 @@ button:hover {
 
     align-items: center;
 
-    height: 20px;
+    height: 10px;
 
 }
 
@@ -915,5 +915,62 @@ code {
 
     }
 
+
+}
+
+/* =========================
+   Markdown Code Blocks
+========================= */
+
+.message pre {
+
+    background: #0b1120;
+
+    color: #e5e7eb;
+
+    padding: 16px;
+
+    border-radius: 12px;
+
+    overflow-x: auto;
+
+    margin-top: 12px;
+
+    margin-bottom: 12px;
+
+    border: 1px solid #334155;
+
+}
+
+
+.message pre code {
+
+    background: transparent;
+
+    padding: 0;
+
+    border-radius: 0;
+
+    font-family: "Fira Code", "Courier New", monospace;
+
+    font-size: 14px;
+
+    line-height: 1.6;
+
+    color: inherit;
+
+}
+
+
+
+.message code {
+
+    background: rgba(148, 163, 184, 0.2);
+
+    padding: 3px 6px;
+
+    border-radius: 6px;
+
+    font-family: "Fira Code", monospace;
 
 }
