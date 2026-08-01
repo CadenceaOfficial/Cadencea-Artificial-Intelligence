@@ -468,23 +468,40 @@ async function aiReply(userPrompt) {
             "message",
             "ai"
         );
+        // Add copy button for AI messages
         if (type === "ai") {
+
             const copyBtn = document.createElement("button");
 
             copyBtn.className = "copy-btn";
-            copyBtn.innerHTML = "📋 Copy";
+
+            copyBtn.innerHTML = `
+        <svg viewBox="0 0 24 24">
+            <path d="M9 9h10v10H9z"/>
+            <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>
+        </svg>
+    `;
 
             copyBtn.onclick = () => {
+
                 navigator.clipboard.writeText(text);
-                copyBtn.innerHTML = "✓ Copied";
+
+                copyBtn.innerHTML = "✓";
 
                 setTimeout(() => {
-                    copyBtn.innerHTML = "📋 Copy";
+                    copyBtn.innerHTML = `
+            <svg viewBox="0 0 24 24">
+                <path d="M9 9h10v10H9z"/>
+                <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>
+            </svg>`;
                 }, 1500);
+
             };
 
             message.appendChild(copyBtn);
+
         }
+
 
         chat.appendChild(message);
 
