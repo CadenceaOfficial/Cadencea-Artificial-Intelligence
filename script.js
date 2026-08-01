@@ -245,20 +245,13 @@ async function aiReply(userPrompt) {
             await getDocs(q);
 
 
-
         const history = [];
-
-
 
         snapshot.forEach((doc) => {
 
-
             const data = doc.data();
 
-
-
             if (data.text) {
-
 
                 history.push({
 
@@ -269,17 +262,17 @@ async function aiReply(userPrompt) {
                             :
                             "user",
 
-
                     content: data.text
 
                 });
 
-
             }
-
 
         });
 
+
+        // Only send recent conversation to AI
+        const recentHistory = history.slice(-15);
 
 
         const response =
@@ -303,7 +296,7 @@ async function aiReply(userPrompt) {
 
                         prompt: userPrompt,
 
-                        history: history
+                        history: recentHistory
 
                     })
 
