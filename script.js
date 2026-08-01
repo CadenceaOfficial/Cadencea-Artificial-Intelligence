@@ -28,10 +28,10 @@ const chat = document.getElementById("chat");
 const input = document.getElementById("prompt");
 const send = document.getElementById("send");
 const googleLogin = document.getElementById("googleLogin");
+const themeToggle = document.getElementById("themeToggle");
 
 
 let currentUserId = null;
-
 
 
 // Google Login
@@ -46,21 +46,20 @@ googleLogin.addEventListener("click", async () => {
         );
 
         const user = result.user;
+
         const userPhoto = document.getElementById("userPhoto");
 
         if (userPhoto && user.photoURL) {
-
             userPhoto.src = user.photoURL;
-
         }
 
 
         await setDoc(
             doc(db, "Users", user.uid),
             {
-                name: user.displayName,
+                name: user.displayName || "User",
                 email: user.email,
-                photo: user.photoURL,
+                photo: user.photoURL || "",
                 createdAt: serverTimestamp()
             },
             {
@@ -71,14 +70,16 @@ googleLogin.addEventListener("click", async () => {
 
         currentUserId = user.uid;
 
-
         welcome.style.display = "none";
 
 
         addMessage(
-            `Welcome ${user.displayName}! 👋 How can I help you?`,
+            `Welcome ${user.displayName || "User"}! 👋 How can I help you?`,
             "ai"
         );
+
+
+        loadOldChats();
 
 
     }
@@ -101,7 +102,11 @@ googleLogin.addEventListener("click", async () => {
 
 function addMessage(text, type) {
 
-    const message = document.createElement("div");
+    if (!text) return;
+
+
+    const message =
+        document.createElement("div");
 
 
     message.classList.add(
@@ -116,7 +121,8 @@ function addMessage(text, type) {
     chat.appendChild(message);
 
 
-    chat.scrollTop = chat.scrollHeight;
+    chat.scrollTop =
+        chat.scrollHeight;
 
 }
 
@@ -127,21 +133,41 @@ function addMessage(text, type) {
 
 async function saveMessage(text, sender) {
 
+
     if (!currentUserId) return;
 
 
+    if (!text) {
+
+        console.error(
+            "Blocked empty message:",
+            text
+        );
+
+        return;
+
+    }
+
+
     await addDoc(
+
         collection(
             db,
             "Users",
             currentUserId,
             "Chats"
         ),
+
         {
+
             text: text,
+
             sender: sender,
+
             time: serverTimestamp()
+
         }
+
     );
 
 }
@@ -150,12 +176,13 @@ async function saveMessage(text, sender) {
 
 
 
-// REAL AI RESPONSE
+// AI Response
 
 async function aiReply(userPrompt) {
 
 
-    const typing = document.createElement("div");
+    const typing =
+        document.createElement("div");
 
 
     typing.classList.add(
@@ -169,43 +196,110 @@ async function aiReply(userPrompt) {
         <span></span>
         <span></span>
         <span></span>
-    </div>
-    `;
+    </div>`;
 
 
     chat.appendChild(typing);
 
 
-    chat.scrollTop = chat.scrollHeight;
-
-
-
     try {
 
 
-        const response = await fetch(
+        const chatsRef =
+            collection(
+                db,
+                "Users",
+                currentUserId,
+                "Chats"
+            );
 
-            "https://cadence-ai-backend.cadenceaofficial-ai.workers.dev",
 
-            {
+        const q =
+            query(
+                chatsRef,
+                orderBy("time")
+            );
 
-                method: "POST",
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
+        const snapshot =
+            await getDocs(q);
 
-                body: JSON.stringify({
-                    prompt: userPrompt
-                })
+
+
+        const history = [];
+
+
+
+        snapshot.forEach((doc) => {
+
+
+            const data = doc.data();
+
+
+
+            if (data.text) {
+
+
+                history.push({
+
+                    role:
+                        data.sender === "ai"
+                            ?
+                            "model"
+                            :
+                            "user",
+
+
+                    content: data.text
+
+                });
+
 
             }
 
+
+        });
+
+
+
+        const response =
+            await fetch(
+
+                "https://cadence-ai-backend.cadenceaofficial-ai.workers.dev",
+
+                {
+
+                    method: "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/json"
+
+                    },
+
+
+                    body: JSON.stringify({
+
+                        prompt: userPrompt,
+
+                        history: history
+
+                    })
+
+                });
+
+
+
+        const data =
+            await response.json();
+
+
+
+        console.log(
+            "Backend response:",
+            data
         );
-
-
-
-        const data = await response.json();
 
 
 
@@ -213,25 +307,56 @@ async function aiReply(userPrompt) {
 
 
 
+        if (!data.reply) {
+
+
+            console.error(
+                "Backend did not return reply:",
+                data
+            );
+
+
+            addMessage(
+                "AI server error. Check backend console.",
+                "ai"
+            );
+
+
+            return;
+
+        }
+
+
+
         let reply = data.reply;
 
 
 
-        // If Gemini returns JSON accidentally
-        try {
+        // Handle accidental JSON response
 
-            const parsed = JSON.parse(reply);
+        if (typeof reply === "string") {
 
-            reply =
-                parsed.candidates?.[0]
-                    ?.content
-                    ?.parts?.[0]
-                    ?.text || reply;
+            try {
+
+
+                const parsed =
+                    JSON.parse(reply);
+
+
+                reply =
+                    parsed.candidates?.[0]
+                        ?.content
+                        ?.parts?.[0]
+                        ?.text
+                    ||
+                    reply;
+
+
+            }
+
+            catch (e) { }
 
         }
-
-        catch (e) { }
-
 
 
 
@@ -241,7 +366,7 @@ async function aiReply(userPrompt) {
         );
 
 
-        saveMessage(
+        await saveMessage(
             reply,
             "ai"
         );
@@ -256,13 +381,16 @@ async function aiReply(userPrompt) {
         typing.remove();
 
 
+        console.error(
+            "AI ERROR:",
+            error
+        );
+
+
         addMessage(
             "Sorry, I couldn't connect to my AI brain.",
             "ai"
         );
-
-
-        console.error(error);
 
     }
 
@@ -275,14 +403,14 @@ async function aiReply(userPrompt) {
 
 // Send message
 
-function sendMessage() {
+async function sendMessage() {
 
 
-    const text = input.value.trim();
+    const text =
+        input.value.trim();
 
 
-    if (text === "") return;
-
+    if (!text) return;
 
 
     addMessage(
@@ -291,17 +419,16 @@ function sendMessage() {
     );
 
 
-    saveMessage(
+    input.value = "";
+
+
+    await saveMessage(
         text,
         "user"
     );
 
 
-
-    input.value = "";
-
-
-    aiReply(text);
+    await aiReply(text);
 
 
 }
@@ -310,7 +437,7 @@ function sendMessage() {
 
 
 
-// Load old chats
+// Load chats
 
 async function loadOldChats() {
 
@@ -328,7 +455,6 @@ async function loadOldChats() {
         );
 
 
-
     const q =
         query(
             chatsRef,
@@ -336,16 +462,20 @@ async function loadOldChats() {
         );
 
 
-
     const snapshot =
         await getDocs(q);
 
 
 
+    chat.innerHTML = "";
+
+
     snapshot.forEach((doc) => {
 
 
-        const data = doc.data();
+        const data =
+            doc.data();
+
 
 
         addMessage(
@@ -358,6 +488,7 @@ async function loadOldChats() {
 
 
 }
+
 
 
 
@@ -390,8 +521,7 @@ input.addEventListener(
         }
 
 
-    }
-);
+    });
 
 
 
@@ -414,26 +544,28 @@ onAuthStateChanged(
             );
 
 
-            const userPhoto = document.getElementById("userPhoto");
-
-if (userPhoto && user.photoURL) {
-
-    userPhoto.src = user.photoURL;
-
-}
+            currentUserId = user.uid;
 
 
-welcome.style.display = "none";
+            const userPhoto =
+                document.getElementById("userPhoto");
 
 
-currentUserId = user.uid;
+            if (userPhoto && user.photoURL) {
+
+                userPhoto.src =
+                    user.photoURL;
+
+            }
 
 
-loadOldChats();
+            welcome.style.display = "none";
+
+
+            loadOldChats();
 
 
         }
-
 
         else {
 
@@ -445,32 +577,55 @@ loadOldChats();
 
             welcome.style.display = "flex";
 
-
         }
 
 
     });
+
+
+
+
+
 // Theme Toggle
 
-const themeToggle = document.getElementById("themeToggle");
+if (themeToggle) {
 
-themeToggle.addEventListener("click", () => {
+    themeToggle.addEventListener(
+        "click",
+        () => {
 
-    document.body.classList.toggle("dark");
 
-    // Change icon
-    if (document.body.classList.contains("dark")) {
-        themeToggle.innerText = "☀️";
-    } else {
-        themeToggle.innerText = "🌙";
-    }
+            document.body.classList.toggle(
+                "dark"
+            );
 
-});
-// Auto focus message box when app opens
-window.addEventListener("load", () => {
 
-    setTimeout(() => {
-        input.focus();
-    }, 500);
+            themeToggle.innerText =
+                document.body.classList.contains("dark")
+                    ?
+                    "☀️"
+                    :
+                    "🌙";
 
-});
+
+        });
+
+}
+
+
+
+
+// Auto focus
+
+window.addEventListener(
+    "load",
+    () => {
+
+        setTimeout(
+            () => {
+
+                input.focus();
+
+            }, 500);
+
+    });
