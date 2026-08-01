@@ -96,7 +96,50 @@ googleLogin.addEventListener("click", async () => {
 });
 
 
+async function typeMessage(element, text) {
 
+    element.innerHTML = "";
+
+    let index = 0;
+
+    while (index < text.length) {
+
+        element.innerHTML = marked.parse(
+            text.substring(0, index)
+        );
+
+        index++;
+
+        chat.scrollTop = chat.scrollHeight;
+
+        await new Promise(resolve =>
+            setTimeout(resolve, 10)
+        );
+
+    }
+
+
+    renderMathInElement(element, {
+
+        delimiters: [
+
+            {
+                left: "$$",
+                right: "$$",
+                display: true
+            },
+
+            {
+                left: "$",
+                right: "$",
+                display: false
+            }
+
+        ]
+
+    });
+
+}
 
 // Add message
 
@@ -115,9 +158,18 @@ function addMessage(text, type) {
     );
 
 
-    message.innerHTML = marked.parse(text);
+    const content =
+        document.createElement("div");
 
-    renderMathInElement(message, {
+
+    content.classList.add("message-content");
+
+
+    content.innerHTML =
+        marked.parse(text);
+
+
+    renderMathInElement(content, {
 
         delimiters: [
 
@@ -138,6 +190,44 @@ function addMessage(text, type) {
     });
 
 
+    message.appendChild(content);
+
+
+
+    // Copy button only for AI messages
+    if (type === "ai") {
+
+        const copyBtn =
+            document.createElement("button");
+
+
+        copyBtn.classList.add("copy-btn");
+
+        copyBtn.innerText = "📋 Copy";
+
+
+        copyBtn.onclick = async () => {
+
+            await navigator.clipboard.writeText(text);
+
+            copyBtn.innerText = "✅ Copied";
+
+
+            setTimeout(() => {
+
+                copyBtn.innerText = "📋 Copy";
+
+            }, 1500);
+
+        };
+
+
+        message.appendChild(copyBtn);
+
+    }
+
+
+
     chat.appendChild(message);
 
 
@@ -145,7 +235,6 @@ function addMessage(text, type) {
         chat.scrollHeight;
 
 }
-
 
 
 
@@ -373,9 +462,20 @@ async function aiReply(userPrompt) {
 
 
 
-        addMessage(
-            reply,
+        const message = document.createElement("div");
+
+        message.classList.add(
+            "message",
             "ai"
+        );
+
+
+        chat.appendChild(message);
+
+
+        await typeMessage(
+            message,
+            reply
         );
 
 
