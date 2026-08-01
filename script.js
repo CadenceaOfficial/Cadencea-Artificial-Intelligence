@@ -195,7 +195,7 @@ function addMessage(text, type) {
 
 
     // Copy button only for AI messages
-    if (type === "ai") {
+    {
 
         const copyBtn =
             document.createElement("button");
@@ -208,7 +208,7 @@ function addMessage(text, type) {
 
         copyBtn.onclick = async () => {
 
-            await navigator.clipboard.writeText(text);
+            await navigator.clipboard.writeText(reply);
 
             copyBtn.innerText = "✅ Copied";
 
