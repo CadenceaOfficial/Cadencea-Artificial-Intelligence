@@ -974,3 +974,89 @@ code {
     font-family: "Fira Code", monospace;
 
 }
+
+/* =========================
+   ChatGPT Style Copy Button
+========================= */
+
+
+.message .copy-btn {
+
+    width: auto;
+
+    height: 34px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    margin-top: 12px;
+
+    padding: 0 14px;
+
+    border-radius: 10px;
+
+    font-size: 13px;
+
+    font-weight: 500;
+
+    cursor: pointer;
+
+    transition: .25s ease;
+
+    box-shadow:
+        0 4px 8px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+
+}
+
+
+
+/* Dark mode */
+
+body.dark .copy-btn {
+
+    background: linear-gradient(145deg,
+            #2563eb,
+            #1d4ed8);
+
+    color: white;
+
+    border: 1px solid #3b82f6;
+
+}
+
+
+
+/* Light mode */
+
+body:not(.dark) .copy-btn {
+
+    background: white;
+
+    color: #111827;
+
+    border: 1px solid #d1d5db;
+
+    box-shadow:
+        0 4px 10px rgba(0, 0, 0, 0.12);
+
+}
+
+
+
+.copy-btn:hover {
+
+    transform: translateY(-2px);
+
+}
+
+
+
+.copy-btn:active {
+
+    transform: translateY(1px);
+
+}

@@ -468,7 +468,23 @@ async function aiReply(userPrompt) {
             "message",
             "ai"
         );
+        if (type === "ai") {
+            const copyBtn = document.createElement("button");
 
+            copyBtn.className = "copy-btn";
+            copyBtn.innerHTML = "📋 Copy";
+
+            copyBtn.onclick = () => {
+                navigator.clipboard.writeText(text);
+                copyBtn.innerHTML = "✓ Copied";
+
+                setTimeout(() => {
+                    copyBtn.innerHTML = "📋 Copy";
+                }, 1500);
+            };
+
+            message.appendChild(copyBtn);
+        }
 
         chat.appendChild(message);
 
