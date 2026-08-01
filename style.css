@@ -265,7 +265,7 @@ header p {
 
     color: var(--text-color);
 
-    transition: .25s;
+    transition: 1.00s;
 
 }
 
@@ -423,7 +423,7 @@ textarea {
 
     resize: none;
 
-    height: 46px;
+    height: 56px;
 
     border-radius: 18px;
 
@@ -524,7 +524,7 @@ button:hover {
 
     align-items: center;
 
-    height: 10px;
+    height: 20px;
 
 }
 
