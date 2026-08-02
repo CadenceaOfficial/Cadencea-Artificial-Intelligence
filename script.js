@@ -468,310 +468,268 @@ async function aiReply(userPrompt) {
             "message",
             "ai"
         );
-        // Add copy button for AI messages
-        if (type === "ai") {
+        // Add copy button
+        const copyBtn = document.createElement("button");
 
-            const copyBtn = document.createElement("button");
+        copyBtn.className = "copy-btn";
 
-            copyBtn.className = "copy-btn";
+        copyBtn.innerHTML = `
+<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+<rect x="9" y="9" width="13" height="13" rx="2"></rect>
+<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+</svg>
+`;
 
-            copyBtn.innerHTML = `
-        <svg viewBox="0 0 24 24">
-            <path d="M9 9h10v10H9z"/>
-            <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>
-        </svg>
-    `;
+        copyBtn.onclick = async () => {
 
-            copyBtn.onclick = () => {
+            await navigator.clipboard.writeText(reply);
 
-                navigator.clipboard.writeText(text);
+            copyBtn.innerHTML = "✓";
 
-                copyBtn.innerHTML = "✓";
+            setTimeout(() => {
 
-                setTimeout(() => {
-                    copyBtn.innerHTML = `
-            <svg viewBox="0 0 24 24">
-                <path d="M9 9h10v10H9z"/>
-                <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>
-            </svg>`;
-                }, 1500);
+                copyBtn.innerHTML = `
+<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+<rect x="9" y="9" width="13" height="13" rx="2"></rect>
+<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+</svg>
+`;
 
-            };
+            }, 1500);
 
-            message.appendChild(copyBtn);
+        };
 
-        }
+        message.appendChild(copyBtn);
 
 
-        chat.appendChild(message);
 
 
-        await typeMessage(
-            message,
-            reply
-        );
 
+        // Send message
 
-        await saveMessage(
-            reply,
-            "ai"
-        );
+        async function sendMessage() {
 
 
-    }
+            const text =
+                input.value.trim();
 
 
-    catch (error) {
+            if (!text) return;
 
 
-        typing.remove();
-
-
-        console.error(
-            "AI ERROR:",
-            error
-        );
-
-
-        addMessage(
-            "Sorry, I couldn't connect to my AI brain.",
-            "ai"
-        );
-
-    }
-
-
-}
-
-
-
-
-
-// Send message
-
-async function sendMessage() {
-
-
-    const text =
-        input.value.trim();
-
-
-    if (!text) return;
-
-
-    addMessage(
-        text,
-        "user"
-    );
-
-
-    input.value = "";
-
-
-    await saveMessage(
-        text,
-        "user"
-    );
-
-
-    await aiReply(text);
-
-
-}
-
-
-
-
-
-// Load chats
-
-async function loadOldChats() {
-
-
-    if (!currentUserId) return;
-
-
-
-    const chatsRef =
-        collection(
-            db,
-            "Users",
-            currentUserId,
-            "Chats"
-        );
-
-
-    const q =
-        query(
-            chatsRef,
-            orderBy("time")
-        );
-
-
-    const snapshot =
-        await getDocs(q);
-
-
-
-    chat.innerHTML = "";
-
-
-    snapshot.forEach((doc) => {
-
-
-        const data =
-            doc.data();
-
-
-
-        addMessage(
-            data.text,
-            data.sender
-        );
-
-
-    });
-
-
-}
-
-
-
-
-
-
-// Buttons
-
-send.addEventListener(
-    "click",
-    sendMessage
-);
-
-
-
-input.addEventListener(
-    "keydown",
-    (e) => {
-
-
-        if (
-            e.key === "Enter"
-            &&
-            !e.shiftKey
-        ) {
-
-            e.preventDefault();
-
-            sendMessage();
-
-        }
-
-
-    });
-
-
-
-
-
-
-// Auth state
-
-onAuthStateChanged(
-    auth,
-    (user) => {
-
-
-        if (user) {
-
-
-            console.log(
-                "Logged in:",
-                user.email
+            addMessage(
+                text,
+                "user"
             );
 
 
-            currentUserId = user.uid;
+            input.value = "";
 
 
-            const userPhoto =
-                document.getElementById("userPhoto");
+            await saveMessage(
+                text,
+                "user"
+            );
 
 
-            if (userPhoto && user.photoURL) {
-
-                userPhoto.src =
-                    user.photoURL;
-
-            }
-
-
-            welcome.style.display = "none";
-
-
-            loadOldChats();
+            await aiReply(text);
 
 
         }
 
-        else {
 
 
-            console.log(
-                "No user logged in"
-            );
 
 
-            welcome.style.display = "flex";
+        // Load chats
+
+        async function loadOldChats() {
+
+
+            if (!currentUserId) return;
+
+
+
+            const chatsRef =
+                collection(
+                    db,
+                    "Users",
+                    currentUserId,
+                    "Chats"
+                );
+
+
+            const q =
+                query(
+                    chatsRef,
+                    orderBy("time")
+                );
+
+
+            const snapshot =
+                await getDocs(q);
+
+
+
+            chat.innerHTML = "";
+
+
+            snapshot.forEach((doc) => {
+
+
+                const data =
+                    doc.data();
+
+
+
+                addMessage(
+                    data.text,
+                    data.sender
+                );
+
+
+            });
+
 
         }
 
 
-    });
+
+
+
+
+        // Buttons
+
+        send.addEventListener(
+            "click",
+            sendMessage
+        );
+
+
+
+        input.addEventListener(
+            "keydown",
+            (e) => {
+
+
+                if (
+                    e.key === "Enter"
+                    &&
+                    !e.shiftKey
+                ) {
+
+                    e.preventDefault();
+
+                    sendMessage();
+
+                }
+
+
+            });
 
 
 
 
 
-// Theme Toggle
 
-if (themeToggle) {
+        // Auth state
 
-    themeToggle.addEventListener(
-        "click",
-        () => {
-
-
-            document.body.classList.toggle(
-                "dark"
-            );
+        onAuthStateChanged(
+            auth,
+            (user) => {
 
 
-            themeToggle.innerText =
-                document.body.classList.contains("dark")
-                    ?
-                    "☀️"
-                    :
-                    "🌙";
+                if (user) {
 
 
-        });
+                    console.log(
+                        "Logged in:",
+                        user.email
+                    );
 
-}
+
+                    currentUserId = user.uid;
+
+
+                    const userPhoto =
+                        document.getElementById("userPhoto");
+
+
+                    if (userPhoto && user.photoURL) {
+
+                        userPhoto.src =
+                            user.photoURL;
+
+                    }
+
+
+                    welcome.style.display = "none";
+
+
+                    loadOldChats();
+
+
+                }
+
+                else {
+
+
+                    console.log(
+                        "No user logged in"
+                    );
+
+
+                    welcome.style.display = "flex";
+
+                }
+
+
+            });
 
 
 
 
-// Auto focus
 
-window.addEventListener(
-    "load",
-    () => {
+        // Theme Toggle
 
-        setTimeout(
+        if (themeToggle) {
+
+            themeToggle.addEventListener(
+                "click",
+                () => {
+
+
+                    document.body.classList.toggle(
+                        "dark"
+                    );
+
+
+                    themeToggle.innerText =
+                        document.body.classList.contains("dark")
+                            ?
+                            "☀️"
+                            :
+                            "🌙";
+
+
+                });
+
+        }
+
+
+
+
+        // Auto focus
+
+        window.addEventListener(
+            "load",
             () => {
 
-                input.focus();
+                setTimeout(
+                    () => {
 
-            }, 500);
+                        input.focus();
 
-    });
+                    }, 500);
+
+            });
