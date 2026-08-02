@@ -1085,11 +1085,41 @@ body:not(.dark) .copy-btn {
     transform: translateY(1px);
 
 }
+
 .copy-icon {
 
     width: 18px;
     height: 18px;
     display: block;
     object-fit: contain;
+
+}
+
+/* ===============================
+   Image Upload Preview
+   =============================== */
+
+#imagePreview {
+
+    padding: 8px;
+
+    display: flex;
+
+    gap: 10px;
+
+}
+
+
+.preview-image {
+
+    width: 90px;
+
+    height: 90px;
+
+    object-fit: cover;
+
+    border-radius: 16px;
+
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
 
 }

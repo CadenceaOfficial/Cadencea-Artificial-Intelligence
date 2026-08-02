@@ -39,10 +39,88 @@ const input = document.getElementById("prompt");
 const send = document.getElementById("send");
 const googleLogin = document.getElementById("googleLogin");
 const themeToggle = document.getElementById("themeToggle");
+const attach = document.getElementById("attach");
+const imageUpload = document.getElementById("imageUpload");
+const imagePreview = document.getElementById("imagePreview");
+
+
+let selectedImage = null;
 
 let currentUserId = null;
 
+// ===============================
+// Image Upload
+// ===============================
 
+attach.addEventListener(
+    "click",
+    () => {
+
+        imageUpload.click();
+
+    }
+);
+
+
+
+imageUpload.addEventListener(
+    "change",
+    async (e) => {
+
+        const file =
+            e.target.files[0];
+
+
+        if (!file) return;
+
+
+        selectedImage =
+            await convertImage(file);
+
+
+        if (imagePreview) {
+
+            imagePreview.innerHTML = `
+
+                <img 
+                    src="${selectedImage}"
+                    class="preview-image"
+                    alt="Selected Image"
+                >
+
+            `;
+
+        }
+
+
+    }
+);
+
+
+
+function convertImage(file) {
+
+    return new Promise(
+        (resolve, reject) => {
+
+            const reader =
+                new FileReader();
+
+
+            reader.onload =
+                () => resolve(reader.result);
+
+
+            reader.onerror =
+                reject;
+
+
+            reader.readAsDataURL(file);
+
+        }
+    );
+
+}
 // ===============================
 // Markdown + KaTeX
 // ===============================
@@ -311,7 +389,7 @@ googleLogin.addEventListener(
             await setDoc(
 
                 doc(db, "Users", user.uid),
-            
+
                 {
 
                     name: user.displayName || "User",
