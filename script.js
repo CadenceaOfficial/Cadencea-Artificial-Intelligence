@@ -1,4 +1,11 @@
-// Firebase imports
+// ===============================
+// Cadencea AI
+// Rebuilt from scratch
+// Part 1 / 4
+// ===============================
+
+
+// Firebase
 import {
     db,
     auth,
@@ -22,7 +29,10 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
 
+// ===============================
 // Elements
+// ===============================
+
 const welcome = document.getElementById("welcome");
 const chat = document.getElementById("chat");
 const input = document.getElementById("prompt");
@@ -30,144 +40,143 @@ const send = document.getElementById("send");
 const googleLogin = document.getElementById("googleLogin");
 const themeToggle = document.getElementById("themeToggle");
 
-
 let currentUserId = null;
 
 
-// Google Login
+// ===============================
+// Markdown + KaTeX
+// ===============================
 
-googleLogin.addEventListener("click", async () => {
+function renderMarkdown(text) {
 
-    try {
+    const wrapper = document.createElement("div");
 
-        const result = await signInWithPopup(
-            auth,
-            googleProvider
-        );
+    wrapper.className = "message-content";
 
-        const user = result.user;
+    wrapper.innerHTML = marked.parse(text || "");
 
-        const userPhoto = document.getElementById("userPhoto");
-
-        if (userPhoto && user.photoURL) {
-            userPhoto.src = user.photoURL;
-        }
-
-
-        await setDoc(
-            doc(db, "Users", user.uid),
-            {
-                name: user.displayName || "User",
-                email: user.email,
-                photo: user.photoURL || "",
-                createdAt: serverTimestamp()
-            },
-            {
-                merge: true
-            }
-        );
-
-
-        currentUserId = user.uid;
-
-        welcome.style.display = "none";
-
-
-        addMessage(
-            `Welcome ${user.displayName || "User"}! 👋 How can I help you?`,
-            "ai"
-        );
-
-
-        loadOldChats();
-
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Google login error:",
-            error
-        );
-
-    }
-
-});
-
-
-async function typeMessage(element, text) {
-
-    element.innerHTML = "";
-
-    let index = 0;
-
-    while (index < text.length) {
-
-        element.innerHTML = marked.parse(
-            text.substring(0, index)
-        );
-
-        index++;
-
-        chat.scrollTop = chat.scrollHeight;
-
-        await new Promise(resolve =>
-            setTimeout(resolve, 10)
-        );
-
-    }
-
-
-    renderMathInElement(element, {
-
+    renderMathInElement(wrapper, {
         delimiters: [
-
             {
                 left: "$$",
                 right: "$$",
                 display: true
             },
-
             {
                 left: "$",
                 right: "$",
                 display: false
             }
-
         ]
-
     });
+
+    return wrapper;
 
 }
 
-// Add message
+
+// ===============================
+// Copy Button
+// ===============================
+
+function createCopyButton(text) {
+
+    const btn = document.createElement("button");
+
+    btn.className = "copy-btn";
+
+    // Default icon
+    btn.innerHTML = `
+        <img src="icons8-copy-96.png" class="copy-icon" alt="Copy">
+    `;
+
+    btn.onclick = async () => {
+
+        try {
+
+            await navigator.clipboard.writeText(text);
+
+            // Show checkmark
+            btn.innerHTML = "✓";
+
+            setTimeout(() => {
+
+                btn.innerHTML = `
+                    <img src="icons/icons8-copy-96.png" class="copy-icon" alt="Copy">
+                `;
+
+            }, 1500);
+
+        }
+
+        catch (err) {
+
+            console.error("Copy failed:", err);
+
+        }
+
+    };
+
+    return btn;
+
+}
+
+// ===============================
+// Add Message
+// ===============================
 
 function addMessage(text, type) {
 
-    if (!text) return;
+    const message = document.createElement("div");
 
+    message.className = `message ${type}`;
 
-    const message =
-        document.createElement("div");
-
-
-    message.classList.add(
-        "message",
-        type
+    message.appendChild(
+        renderMarkdown(text)
     );
 
+    if (type === "ai") {
 
-    const content =
-        document.createElement("div");
+        message.appendChild(
+            createCopyButton(text)
+        );
+
+    }
+
+    chat.appendChild(message);
+
+    chat.scrollTop = chat.scrollHeight;
+
+    return message;
+
+}
 
 
-    content.classList.add("message-content");
+// ===============================
+// Typing Animation
+// ===============================
 
+async function typeMessage(messageElement, text) {
 
-    content.innerHTML =
-        marked.parse(text);
+    const content = messageElement.querySelector(".message-content");
 
+    content.innerHTML = "";
+
+    let current = "";
+
+    for (const ch of text) {
+
+        current += ch;
+
+        content.innerHTML = marked.parse(current);
+
+        chat.scrollTop = chat.scrollHeight;
+
+        await new Promise(resolve =>
+            setTimeout(resolve, 8)
+        );
+
+    }
 
     renderMathInElement(content, {
 
@@ -189,74 +198,19 @@ function addMessage(text, type) {
 
     });
 
-
-    message.appendChild(content);
-
-
-
-    // Copy button only for AI messages
-    {
-
-        const copyBtn =
-            document.createElement("button");
-
-
-        copyBtn.classList.add("copy-btn");
-
-        copyBtn.innerText = "📋 Copy";
-
-
-        copyBtn.onclick = async () => {
-
-            await navigator.clipboard.writeText(reply);
-
-            copyBtn.innerText = "✅ Copied";
-
-
-            setTimeout(() => {
-
-                copyBtn.innerText = "📋 Copy";
-
-            }, 1500);
-
-        };
-
-
-        message.appendChild(copyBtn);
-
-    }
-
-
-
-    chat.appendChild(message);
-
-
-    chat.scrollTop =
-        chat.scrollHeight;
-
 }
+// ===============================
+// Part 2 / 4
+// Firebase Login + Firestore
+// ===============================
 
 
-
-// Save chat
-
+// Save message
 async function saveMessage(text, sender) {
-
 
     if (!currentUserId) return;
 
-
-    if (!text) {
-
-        console.error(
-            "Blocked empty message:",
-            text
-        );
-
-        return;
-
-    }
-
+    if (!text) return;
 
     await addDoc(
 
@@ -269,9 +223,9 @@ async function saveMessage(text, sender) {
 
         {
 
-            text: text,
+            text,
 
-            sender: sender,
+            sender,
 
             time: serverTimestamp()
 
@@ -283,87 +237,235 @@ async function saveMessage(text, sender) {
 
 
 
+// Load old chats
+async function loadOldChats() {
 
+    if (!currentUserId) return;
 
-// AI Response
+    chat.innerHTML = "";
 
-async function aiReply(userPrompt) {
+    const chatsRef = collection(
 
+        db,
 
-    const typing =
-        document.createElement("div");
+        "Users",
 
+        currentUserId,
 
-    typing.classList.add(
-        "message",
-        "ai"
+        "Chats"
+
     );
 
+    const q = query(
 
-    typing.innerHTML = `
-    <div class="typing">
-        <span></span>
-        <span></span>
-        <span></span>
-    </div>`;
+        chatsRef,
+
+        orderBy("time")
+
+    );
+
+    const snapshot = await getDocs(q);
+
+    snapshot.forEach(docSnap => {
+
+        const data = docSnap.data();
+
+        addMessage(
+
+            data.text,
+
+            data.sender
+
+        );
+
+    });
+
+}
 
 
-    chat.appendChild(typing);
 
+// Google Login
+googleLogin.addEventListener(
 
-    try {
+    "click",
 
+    async () => {
 
-        const chatsRef =
-            collection(
-                db,
-                "Users",
-                currentUserId,
-                "Chats"
+        try {
+
+            const result = await signInWithPopup(
+
+                auth,
+
+                googleProvider
+
             );
 
+            const user = result.user;
 
-        const q =
-            query(
-                chatsRef,
-                orderBy("time")
+            currentUserId = user.uid;
+
+            document.getElementById("userPhoto").src =
+                user.photoURL || "";
+
+            await setDoc(
+
+                doc(db, "Users", user.uid),
+
+                {
+
+                    name: user.displayName || "User",
+
+                    email: user.email,
+
+                    photo: user.photoURL || "",
+
+                    createdAt: serverTimestamp()
+
+                },
+
+                {
+
+                    merge: true
+
+                }
+
             );
 
+            welcome.style.display = "none";
 
-        const snapshot =
-            await getDocs(q);
+            if (chat.children.length === 0) {
 
-
-        const history = [];
-
-        snapshot.forEach((doc) => {
-
-            const data = doc.data();
-
-            if (data.text) {
-
-                history.push({
-
-                    role:
-                        data.sender === "ai"
-                            ?
-                            "model"
-                            :
-                            "user",
-
-                    content: data.text
-
-                });
+                addMessage(
+                    `Welcome ${user.displayName}! 👋`,
+                    "ai"
+                );
 
             }
 
+        }
+
+        catch (err) {
+
+            console.error(
+
+                "Google Login Error",
+
+                err
+
+            );
+
+        }
+
+    }
+
+);
+
+
+
+// Auth State
+onAuthStateChanged(
+
+    auth,
+
+    async (user) => {
+
+        if (!user) {
+
+            welcome.style.display = "flex";
+
+            return;
+
+        }
+
+        currentUserId = user.uid;
+
+        document.getElementById("userPhoto").src =
+            user.photoURL || "";
+
+        welcome.style.display = "none";
+
+        await loadOldChats();
+
+    }
+
+);
+// ===============================
+// Part 3 / 4
+// AI Communication
+// ===============================
+
+async function aiReply(userPrompt) {
+
+    // Typing animation
+    const typing = document.createElement("div");
+
+    typing.className = "message ai";
+
+    typing.innerHTML = `
+        <div class="typing">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    `;
+
+    chat.appendChild(typing);
+
+    chat.scrollTop = chat.scrollHeight;
+
+    try {
+
+        // Read previous chats
+        const chatsRef = collection(
+            db,
+            "Users",
+            currentUserId,
+            "Chats"
+        );
+
+        const q = query(
+            chatsRef,
+            orderBy("time")
+        );
+
+        const snapshot = await getDocs(q);
+
+        const history = [];
+
+        snapshot.forEach(doc => {
+
+            const data = doc.data();
+
+            if (!data.text) return;
+
+            history.push({
+
+                role:
+                    data.sender === "ai"
+                        ? "model"
+                        : "user",
+
+                content: data.text
+
+            });
+
         });
 
+        // Only send recent conversation
+        const recentHistory =
+            history.slice(-15);
 
-        // Only send recent conversation to AI
-        const recentHistory = history.slice(-15);
+        // Current message
+        recentHistory.push({
 
+            role: "user",
 
+            content: userPrompt
+
+        });
+
+        // Backend request
         const response =
             await fetch(
 
@@ -380,70 +482,64 @@ async function aiReply(userPrompt) {
 
                     },
 
-
                     body: JSON.stringify({
-
-                        prompt: userPrompt,
 
                         history: recentHistory
 
                     })
 
-                });
+                }
 
-
+            );
 
         const data =
             await response.json();
-
-
 
         console.log(
             "Backend response:",
             data
         );
 
-
-
         typing.remove();
 
-
-
-        if (!data.reply) {
-
-
-            console.error(
-                "Backend did not return reply:",
-                data
-            );
-
+        if (!response.ok) {
 
             addMessage(
-                "AI server error. Check backend console.",
-                "ai"
-            );
 
+                "Server Error: " +
+                (data.error || "Unknown"),
+
+                "ai"
+
+            );
 
             return;
 
         }
 
+        if (!data.reply) {
 
+            addMessage(
+
+                "Backend returned no reply.",
+
+                "ai"
+
+            );
+
+            return;
+
+        }
 
         let reply = data.reply;
 
-
-
-        // Handle accidental JSON response
-
+        // If backend accidentally returns JSON string
         if (typeof reply === "string") {
 
             try {
 
-
                 const parsed =
                     JSON.parse(reply);
-
 
                 reply =
                     parsed.candidates?.[0]
@@ -453,283 +549,179 @@ async function aiReply(userPrompt) {
                     ||
                     reply;
 
-
             }
 
             catch (e) { }
 
         }
 
+        // Create AI message
+        const message =
+            document.createElement("div");
 
+        message.className =
+            "message ai";
 
-        const message = document.createElement("div");
+        const content =
+            document.createElement("div");
 
-        message.classList.add(
-            "message",
+        content.className =
+            "message-content";
+
+        message.appendChild(content);
+
+        // Copy button
+        message.appendChild(
+
+            createCopyButton(reply)
+
+        );
+
+        chat.appendChild(message);
+
+        // Type animation
+        await typeMessage(
+
+            message,
+
+            reply
+
+        );
+
+        // Save AI reply
+        await saveMessage(
+
+            reply,
+
             "ai"
-        );
-        // Add copy button
-        const copyBtn = document.createElement("button");
 
-        copyBtn.className = "copy-btn";
-
-        copyBtn.innerHTML = `
-<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-<rect x="9" y="9" width="13" height="13" rx="2"></rect>
-<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-</svg>
-`;
-
-        copyBtn.onclick = async () => {
-
-            await navigator.clipboard.writeText(reply);
-
-            copyBtn.innerHTML = "✓";
-
-            setTimeout(() => {
-
-                copyBtn.innerHTML = `
-<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-<rect x="9" y="9" width="13" height="13" rx="2"></rect>
-<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-</svg>
-`;
-
-            }, 1500);
-
-        };
-
-        message.appendChild(copyBtn);
-
-
-
-
-
-        // Send message
-
-        async function sendMessage() {
-
-
-            const text =
-                input.value.trim();
-
-
-            if (!text) return;
-
-
-            addMessage(
-                text,
-                "user"
-            );
-
-
-            input.value = "";
-
-
-            await saveMessage(
-                text,
-                "user"
-            );
-
-
-            await aiReply(text);
-
-
-        }
-
-
-
-
-
-        // Load chats
-
-        async function loadOldChats() {
-
-
-            if (!currentUserId) return;
-
-
-
-            const chatsRef =
-                collection(
-                    db,
-                    "Users",
-                    currentUserId,
-                    "Chats"
-                );
-
-
-            const q =
-                query(
-                    chatsRef,
-                    orderBy("time")
-                );
-
-
-            const snapshot =
-                await getDocs(q);
-
-
-
-            chat.innerHTML = "";
-
-
-            snapshot.forEach((doc) => {
-
-
-                const data =
-                    doc.data();
-
-
-
-                addMessage(
-                    data.text,
-                    data.sender
-                );
-
-
-            });
-
-
-        }
-
-
-
-
-
-
-        // Buttons
-
-        send.addEventListener(
-            "click",
-            sendMessage
         );
 
+    }
+
+    catch (err) {
+
+        typing.remove();
+
+        console.error(err);
+
+        addMessage(
+
+            "Sorry, I couldn't connect to my AI brain.",
+
+            "ai"
+
+        );
+
+    }
+
+}
+// ===============================
+// Part 4 / 4
+// Send Button + Theme + Startup
+// ===============================
 
 
-        input.addEventListener(
-            "keydown",
-            (e) => {
+// Send Message
+async function sendMessage() {
 
+    const text = input.value.trim();
 
-                if (
-                    e.key === "Enter"
-                    &&
-                    !e.shiftKey
-                ) {
+    if (!text) return;
 
-                    e.preventDefault();
+    // Show user message immediately
+    addMessage(
+        text,
+        "user"
+    );
 
-                    sendMessage();
+    input.value = "";
 
-                }
+    // Save user message
+    await saveMessage(
+        text,
+        "user"
+    );
 
+    // Ask AI
+    await aiReply(text);
 
-            });
-
-
-
-
-
-
-        // Auth state
-
-        onAuthStateChanged(
-            auth,
-            (user) => {
-
-
-                if (user) {
-
-
-                    console.log(
-                        "Logged in:",
-                        user.email
-                    );
-
-
-                    currentUserId = user.uid;
-
-
-                    const userPhoto =
-                        document.getElementById("userPhoto");
-
-
-                    if (userPhoto && user.photoURL) {
-
-                        userPhoto.src =
-                            user.photoURL;
-
-                    }
-
-
-                    welcome.style.display = "none";
-
-
-                    loadOldChats();
-
-
-                }
-
-                else {
-
-
-                    console.log(
-                        "No user logged in"
-                    );
-
-
-                    welcome.style.display = "flex";
-
-                }
-
-
-            });
+}
 
 
 
+// Send button
+send.addEventListener(
+    "click",
+    sendMessage
+);
 
 
-        // Theme Toggle
+// Enter key
+input.addEventListener(
+    "keydown",
+    (e) => {
 
-        if (themeToggle) {
+        if (
+            e.key === "Enter" &&
+            !e.shiftKey
+        ) {
 
-            themeToggle.addEventListener(
-                "click",
-                () => {
+            e.preventDefault();
 
-
-                    document.body.classList.toggle(
-                        "dark"
-                    );
-
-
-                    themeToggle.innerText =
-                        document.body.classList.contains("dark")
-                            ?
-                            "☀️"
-                            :
-                            "🌙";
-
-
-                });
+            sendMessage();
 
         }
 
+    }
+);
 
 
 
-        // Auto focus
+// Default Dark Theme
+document.body.classList.add("dark");
 
-        window.addEventListener(
-            "load",
+if (themeToggle) {
+
+    themeToggle.innerText = "☀️";
+
+    themeToggle.addEventListener(
+        "click",
+        () => {
+
+            document.body.classList.toggle("dark");
+
+            themeToggle.innerText =
+                document.body.classList.contains("dark")
+                    ? "☀️"
+                    : "🌙";
+
+        }
+    );
+
+}
+
+
+
+// Auto Focus
+window.addEventListener(
+    "load",
+    () => {
+
+        setTimeout(
             () => {
 
-                setTimeout(
-                    () => {
+                input.focus();
 
-                        input.focus();
+            },
+            300
+        );
 
-                    }, 500);
+    }
+);
 
-            });
+
+
+// ===============================
+// End of Script
+// ===============================

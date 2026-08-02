@@ -1085,3 +1085,11 @@ body:not(.dark) .copy-btn {
     transform: translateY(1px);
 
 }
+.copy-icon {
+
+    width: 18px;
+    height: 18px;
+    display: block;
+    object-fit: contain;
+
+}
