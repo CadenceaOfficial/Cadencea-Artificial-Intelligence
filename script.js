@@ -311,7 +311,7 @@ googleLogin.addEventListener(
             await setDoc(
 
                 doc(db, "Users", user.uid),
-
+            
                 {
 
                     name: user.displayName || "User",
