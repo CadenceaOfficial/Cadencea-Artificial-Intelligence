@@ -473,7 +473,10 @@ onAuthStateChanged(
 // AI Communication
 // ===============================
 
-async function aiReply(userPrompt) {
+async function aiReply(
+    userPrompt,
+    image = null
+) {
 
     // Typing animation
     const typing = document.createElement("div");
@@ -559,10 +562,11 @@ async function aiReply(userPrompt) {
                             "application/json"
 
                     },
-
                     body: JSON.stringify({
 
-                        history: recentHistory
+                        history: recentHistory,
+
+                        image: image
 
                     })
 
@@ -705,11 +709,11 @@ async function sendMessage() {
 
     const text = input.value.trim();
 
-    if (!text) return;
+    if (!text && !selectedImage) return;
 
     // Show user message immediately
     addMessage(
-        text,
+        text || "🖼️ Image",
         "user"
     );
 
@@ -722,7 +726,14 @@ async function sendMessage() {
     );
 
     // Ask AI
-    await aiReply(text);
+    await aiReply(
+        text,
+        selectedImage
+    );
+
+    selectedImage = null;
+    imagePreview.innerHTML = "";
+    imageUpload.value = "";
 
 }
 
