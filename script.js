@@ -781,34 +781,56 @@ async function sendMessage() {
     if (!text && !selectedImage) return;
 
     // Show user's message
-    if (text) {
+    if (text || selectedImage) {
 
-        addMessage(
-            text,
-            "user"
-        );
+        const message = document.createElement("div");
+        message.className = "message user";
+
+        // If image exists, show it immediately
+        if (selectedImage) {
+
+            const img = document.createElement("img");
+
+            img.src = selectedImage;
+            img.className = "chat-image";
+
+            img.style.marginBottom = text ? "10px" : "0";
+
+            message.appendChild(img);
+
+        }
+
+        // If text exists, show text below image
+        if (text) {
+
+            const content = document.createElement("div");
+
+            content.className = "message-content";
+            content.innerHTML = marked.parse(text);
+
+            message.appendChild(content);
+
+        }
+
+        chat.appendChild(message);
+        chat.scrollTop = chat.scrollHeight;
 
         await saveMessage(
-            text,
+            text || "[Image]",
             "user"
         );
 
     }
+    // Remove preview after moving image into chat
+    selectedImage = null;
 
-    // If only image was sent
-    else {
+    imageUpload.value = "";
 
-        addMessage(
-            "📷 Image",
-            "user"
-        );
+    imagePreview.innerHTML = "";
 
-        await saveMessage(
-            "[Image]",
-            "user"
-        );
+    imagePreview.style.display = "none";
 
-    }
+  
 
     input.value = "";
 

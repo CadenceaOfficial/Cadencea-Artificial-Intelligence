@@ -1207,3 +1207,19 @@ body:not(.dark) .copy-btn {
     background: rgba(59, 130, 246, .15);
 
 }
+
+.chat-image {
+    max-width: 260px;
+    max-height: 260px;
+    border-radius: 16px;
+    display: block;
+    margin-bottom: 10px;
+    object-fit: cover;
+}
+
+.chat-image {
+    max-width: 260px;
+    border-radius: 16px;
+    display: block;
+    margin-bottom: 10px;
+}
