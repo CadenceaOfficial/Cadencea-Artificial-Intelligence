@@ -236,6 +236,19 @@ async function typeMessage(message, text) {
 // Image Preview
 // =======================================
 
+const uploadBtn = document.getElementById("uploadBtn");
+
+if (uploadBtn && imageUpload) {
+
+    uploadBtn.addEventListener("click", () => {
+
+        imageUpload.click();
+
+    });
+
+}
+
+
 imageUpload.addEventListener("change", e => {
 
     const file = e.target.files[0];
@@ -662,7 +675,7 @@ async function aiReply(userPrompt) {
 
             }
 
-            catch (e) {}
+            catch (e) { }
 
         }
 
