@@ -236,11 +236,11 @@ async function typeMessage(message, text) {
 // Image Preview
 // =======================================
 
-const uploadBtn = document.getElementById("uploadBtn");
+const attachBtn = document.getElementById("attach");
 
-if (uploadBtn && imageUpload) {
+if (attachBtn && imageUpload) {
 
-    uploadBtn.addEventListener("click", () => {
+    attachBtn.addEventListener("click", () => {
 
         imageUpload.click();
 
