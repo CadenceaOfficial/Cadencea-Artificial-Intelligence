@@ -1120,6 +1120,90 @@ body:not(.dark) .copy-btn {
 
     border-radius: 16px;
 
-    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+
+}
+
+/* =========================
+   Better Markdown Lists
+========================= */
+
+.message-content ul,
+.message-content ol {
+
+    padding-left: 26px;
+    margin: 12px 0;
+
+}
+
+.message-content li {
+
+    margin: 8px 0;
+    line-height: 1.7;
+
+}
+
+.message-content ul li::marker,
+.message-content ol li::marker {
+
+    color: #3b82f6;
+    font-weight: 600;
+
+}
+
+.message-content p {
+
+    margin: 10px 0;
+
+}
+
+.message-content h1,
+.message-content h2,
+.message-content h3,
+.message-content h4 {
+
+    margin: 18px 0 10px;
+
+}
+
+.message-content blockquote {
+
+    border-left: 4px solid #3b82f6;
+    padding-left: 14px;
+    margin: 14px 0;
+    color: var(--secondary-text);
+
+}
+
+.message-content hr {
+
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin: 18px 0;
+
+}
+
+.message-content table {
+
+    border-collapse: collapse;
+    margin: 14px 0;
+    width: 100%;
+    overflow-x: auto;
+    display: block;
+
+}
+
+.message-content th,
+.message-content td {
+
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    text-align: left;
+
+}
+
+.message-content th {
+
+    background: rgba(59, 130, 246, .15);
 
 }

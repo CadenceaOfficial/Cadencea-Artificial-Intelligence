@@ -1,8 +1,8 @@
-// ===============================
-// Cadencea AI
-// Rebuilt from scratch
-// Part 1 / 4
-// ===============================
+// =======================================
+// Cadence AI
+// Script.js
+// Part 1
+// =======================================
 
 
 // Firebase
@@ -29,9 +29,10 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
 
-// ===============================
+
+// =======================================
 // Elements
-// ===============================
+// =======================================
 
 const welcome = document.getElementById("welcome");
 const chat = document.getElementById("chat");
@@ -39,91 +40,21 @@ const input = document.getElementById("prompt");
 const send = document.getElementById("send");
 const googleLogin = document.getElementById("googleLogin");
 const themeToggle = document.getElementById("themeToggle");
-const attach = document.getElementById("attach");
+
 const imageUpload = document.getElementById("imageUpload");
 const imagePreview = document.getElementById("imagePreview");
 
 
-let selectedImage = null;
 
 let currentUserId = null;
 
-// ===============================
-// Image Upload
-// ===============================
-
-attach.addEventListener(
-    "click",
-    () => {
-
-        imageUpload.click();
-
-    }
-);
+let selectedImage = null;
 
 
 
-imageUpload.addEventListener(
-    "change",
-    async (e) => {
-
-        const file =
-            e.target.files[0];
-
-
-        if (!file) return;
-
-
-        selectedImage =
-            await convertImage(file);
-
-
-        if (imagePreview) {
-
-            imagePreview.innerHTML = `
-
-                <img 
-                    src="${selectedImage}"
-                    class="preview-image"
-                    alt="Selected Image"
-                >
-
-            `;
-
-        }
-
-
-    }
-);
-
-
-
-function convertImage(file) {
-
-    return new Promise(
-        (resolve, reject) => {
-
-            const reader =
-                new FileReader();
-
-
-            reader.onload =
-                () => resolve(reader.result);
-
-
-            reader.onerror =
-                reject;
-
-
-            reader.readAsDataURL(file);
-
-        }
-    );
-
-}
-// ===============================
-// Markdown + KaTeX
-// ===============================
+// =======================================
+// Markdown + Math
+// =======================================
 
 function renderMarkdown(text) {
 
@@ -134,18 +65,23 @@ function renderMarkdown(text) {
     wrapper.innerHTML = marked.parse(text || "");
 
     renderMathInElement(wrapper, {
+
         delimiters: [
+
             {
                 left: "$$",
                 right: "$$",
                 display: true
             },
+
             {
                 left: "$",
                 right: "$",
                 display: false
             }
+
         ]
+
     });
 
     return wrapper;
@@ -153,34 +89,41 @@ function renderMarkdown(text) {
 }
 
 
-// ===============================
+
+// =======================================
 // Copy Button
-// ===============================
+// =======================================
 
 function createCopyButton(text) {
 
-    const btn = document.createElement("button");
+    const button = document.createElement("button");
 
-    btn.className = "copy-btn";
+    button.className = "copy-btn";
 
-    // Default icon
-    btn.innerHTML = `
-        <img src="icons8-copy-96.png" class="copy-icon" alt="Copy">
+    button.innerHTML = `
+        <img
+            src="icons8-copy-96.png"
+            class="copy-icon"
+            alt="Copy"
+        >
     `;
 
-    btn.onclick = async () => {
+    button.onclick = async () => {
 
         try {
 
             await navigator.clipboard.writeText(text);
 
-            // Show checkmark
-            btn.innerHTML = "✓";
+            button.innerHTML = "✓";
 
             setTimeout(() => {
 
-                btn.innerHTML = `
-                    <img src="icons/icons8-copy-96.png" class="copy-icon" alt="Copy">
+                button.innerHTML = `
+                    <img
+                        src="icons8-copy-96.png"
+                        class="copy-icon"
+                        alt="Copy"
+                    >
                 `;
 
             }, 1500);
@@ -189,19 +132,21 @@ function createCopyButton(text) {
 
         catch (err) {
 
-            console.error("Copy failed:", err);
+            console.error(err);
 
         }
 
     };
 
-    return btn;
+    return button;
 
 }
 
-// ===============================
+
+
+// =======================================
 // Add Message
-// ===============================
+// =======================================
 
 function addMessage(text, type) {
 
@@ -210,13 +155,17 @@ function addMessage(text, type) {
     message.className = `message ${type}`;
 
     message.appendChild(
+
         renderMarkdown(text)
+
     );
 
     if (type === "ai") {
 
         message.appendChild(
+
             createCopyButton(text)
+
         );
 
     }
@@ -230,28 +179,31 @@ function addMessage(text, type) {
 }
 
 
-// ===============================
+
+// =======================================
 // Typing Animation
-// ===============================
+// =======================================
 
-async function typeMessage(messageElement, text) {
+async function typeMessage(message, text) {
 
-    const content = messageElement.querySelector(".message-content");
+    const content = message.querySelector(".message-content");
 
     content.innerHTML = "";
 
     let current = "";
 
-    for (const ch of text) {
+    for (const letter of text) {
 
-        current += ch;
+        current += letter;
 
         content.innerHTML = marked.parse(current);
 
         chat.scrollTop = chat.scrollHeight;
 
         await new Promise(resolve =>
+
             setTimeout(resolve, 8)
+
         );
 
     }
@@ -277,17 +229,52 @@ async function typeMessage(messageElement, text) {
     });
 
 }
-// ===============================
-// Part 2 / 4
-// Firebase Login + Firestore
-// ===============================
 
 
-// Save message
+
+// =======================================
+// Image Preview
+// =======================================
+
+imageUpload.addEventListener("change", e => {
+
+    const file = e.target.files[0];
+
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = function () {
+
+        selectedImage = reader.result;
+
+        imagePreview.style.display = "block";
+
+        imagePreview.innerHTML = `
+            <img
+                src="${selectedImage}"
+                class="preview-image"
+            >
+        `;
+
+    };
+
+    reader.readAsDataURL(file);
+
+});
+// =======================================
+// Part 2
+// Firebase + Authentication + Firestore
+// =======================================
+
+
+// -------------------------------
+// Save Message
+// -------------------------------
+
 async function saveMessage(text, sender) {
 
     if (!currentUserId) return;
-
     if (!text) return;
 
     await addDoc(
@@ -300,13 +287,9 @@ async function saveMessage(text, sender) {
         ),
 
         {
-
-            text,
-
-            sender,
-
+            text: text,
+            sender: sender,
             time: serverTimestamp()
-
         }
 
     );
@@ -315,7 +298,10 @@ async function saveMessage(text, sender) {
 
 
 
-// Load old chats
+// -------------------------------
+// Load Previous Chats
+// -------------------------------
+
 async function loadOldChats() {
 
     if (!currentUserId) return;
@@ -325,11 +311,8 @@ async function loadOldChats() {
     const chatsRef = collection(
 
         db,
-
         "Users",
-
         currentUserId,
-
         "Chats"
 
     );
@@ -337,21 +320,19 @@ async function loadOldChats() {
     const q = query(
 
         chatsRef,
-
         orderBy("time")
 
     );
 
     const snapshot = await getDocs(q);
 
-    snapshot.forEach(docSnap => {
+    snapshot.forEach((docSnap) => {
 
         const data = docSnap.data();
 
         addMessage(
 
             data.text,
-
             data.sender
 
         );
@@ -362,7 +343,10 @@ async function loadOldChats() {
 
 
 
+// -------------------------------
 // Google Login
+// -------------------------------
+
 googleLogin.addEventListener(
 
     "click",
@@ -374,7 +358,6 @@ googleLogin.addEventListener(
             const result = await signInWithPopup(
 
                 auth,
-
                 googleProvider
 
             );
@@ -383,40 +366,61 @@ googleLogin.addEventListener(
 
             currentUserId = user.uid;
 
-            document.getElementById("userPhoto").src =
-                user.photoURL || "";
+            // Profile Photo
+            const photo =
+                document.getElementById("userPhoto");
 
+            if (photo) {
+
+                photo.src =
+                    user.photoURL || "";
+
+            }
+
+            // Save user profile
             await setDoc(
 
-                doc(db, "Users", user.uid),
+                doc(
+                    db,
+                    "Users",
+                    user.uid
+                ),
 
                 {
 
-                    name: user.displayName || "User",
+                    name:
+                        user.displayName || "User",
 
-                    email: user.email,
+                    email:
+                        user.email || "",
 
-                    photo: user.photoURL || "",
+                    photo:
+                        user.photoURL || "",
 
-                    createdAt: serverTimestamp()
+                    createdAt:
+                        serverTimestamp()
 
                 },
 
                 {
-
                     merge: true
-
                 }
 
             );
 
             welcome.style.display = "none";
 
+            await loadOldChats();
+
+            // Welcome only if new chat
             if (chat.children.length === 0) {
 
                 addMessage(
-                    `Welcome ${user.displayName}! 👋`,
+
+                    `Welcome ${user.displayName || "User"}! 👋`,
+
                     "ai"
+
                 );
 
             }
@@ -441,7 +445,10 @@ googleLogin.addEventListener(
 
 
 
-// Auth State
+// -------------------------------
+// Auto Login
+// -------------------------------
+
 onAuthStateChanged(
 
     auth,
@@ -458,8 +465,15 @@ onAuthStateChanged(
 
         currentUserId = user.uid;
 
-        document.getElementById("userPhoto").src =
-            user.photoURL || "";
+        const photo =
+            document.getElementById("userPhoto");
+
+        if (photo) {
+
+            photo.src =
+                user.photoURL || "";
+
+        }
 
         welcome.style.display = "none";
 
@@ -468,17 +482,17 @@ onAuthStateChanged(
     }
 
 );
-// ===============================
-// Part 3 / 4
+// =======================================
+// Part 3
 // AI Communication
-// ===============================
+// =======================================
 
-async function aiReply(
-    userPrompt,
-    image = null
-) {
+async function aiReply(userPrompt) {
 
-    // Typing animation
+    // -----------------------------
+    // Typing Indicator
+    // -----------------------------
+
     const typing = document.createElement("div");
 
     typing.className = "message ai";
@@ -497,7 +511,10 @@ async function aiReply(
 
     try {
 
-        // Read previous chats
+        // -----------------------------
+        // Read Previous Chats
+        // -----------------------------
+
         const chatsRef = collection(
             db,
             "Users",
@@ -514,9 +531,9 @@ async function aiReply(
 
         const history = [];
 
-        snapshot.forEach(doc => {
+        snapshot.forEach(docSnap => {
 
-            const data = doc.data();
+            const data = docSnap.data();
 
             if (!data.text) return;
 
@@ -533,11 +550,17 @@ async function aiReply(
 
         });
 
-        // Only send recent conversation
+
+        // -----------------------------
+        // Last 15 messages only
+        // -----------------------------
+
         const recentHistory =
             history.slice(-15);
 
-        // Current message
+
+        // Current user message
+
         recentHistory.push({
 
             role: "user",
@@ -546,50 +569,50 @@ async function aiReply(
 
         });
 
-        // Backend request
-        const response =
-            await fetch(
 
-                "https://cadence-ai-backend.cadenceaofficial-ai.workers.dev",
+        // -----------------------------
+        // Backend Request
+        // -----------------------------
 
-                {
+        const response = await fetch(
 
-                    method: "POST",
+            "https://cadence-ai-backend.cadenceaofficial-ai.workers.dev",
 
-                    headers: {
+            {
 
-                        "Content-Type":
-                            "application/json"
+                method: "POST",
 
-                    },
-                    body: JSON.stringify({
+                headers: {
 
-                        history: recentHistory,
+                    "Content-Type": "application/json"
 
-                        image: image
+                },
 
-                    })
+                body: JSON.stringify({
 
-                }
+                    history: recentHistory,
 
-            );
+                    image: selectedImage
 
-        const data =
-            await response.json();
+                })
 
-        console.log(
-            "Backend response:",
-            data
+            }
+
         );
 
+
+        const data = await response.json();
+
+        console.log("Backend Response:", data);
+
         typing.remove();
+
 
         if (!response.ok) {
 
             addMessage(
 
-                "Server Error: " +
-                (data.error || "Unknown"),
+                data.error || "Backend Error",
 
                 "ai"
 
@@ -598,6 +621,7 @@ async function aiReply(
             return;
 
         }
+
 
         if (!data.reply) {
 
@@ -613,9 +637,14 @@ async function aiReply(
 
         }
 
+
         let reply = data.reply;
 
-        // If backend accidentally returns JSON string
+
+        // --------------------------------
+        // Sometimes Gemini sends JSON
+        // --------------------------------
+
         if (typeof reply === "string") {
 
             try {
@@ -633,35 +662,41 @@ async function aiReply(
 
             }
 
-            catch (e) { }
+            catch (e) {}
 
         }
 
-        // Create AI message
-        const message =
-            document.createElement("div");
 
-        message.className =
-            "message ai";
+        // -----------------------------
+        // Create Empty AI Bubble
+        // -----------------------------
 
-        const content =
-            document.createElement("div");
+        const message = document.createElement("div");
 
-        content.className =
-            "message-content";
+        message.className = "message ai";
+
+
+        const content = document.createElement("div");
+
+        content.className = "message-content";
 
         message.appendChild(content);
 
-        // Copy button
+
         message.appendChild(
 
             createCopyButton(reply)
 
         );
 
+
         chat.appendChild(message);
 
-        // Type animation
+
+        // -----------------------------
+        // Type Animation
+        // -----------------------------
+
         await typeMessage(
 
             message,
@@ -670,7 +705,11 @@ async function aiReply(
 
         );
 
-        // Save AI reply
+
+        // -----------------------------
+        // Save AI Reply
+        // -----------------------------
+
         await saveMessage(
 
             reply,
@@ -678,6 +717,19 @@ async function aiReply(
             "ai"
 
         );
+
+
+        // -----------------------------
+        // Reset Image
+        // -----------------------------
+
+        selectedImage = null;
+
+        imageUpload.value = "";
+
+        imagePreview.innerHTML = "";
+
+        imagePreview.style.display = "none";
 
     }
 
@@ -698,62 +750,91 @@ async function aiReply(
     }
 
 }
-// ===============================
-// Part 4 / 4
+// =======================================
+// Part 4
 // Send Button + Theme + Startup
-// ===============================
+// =======================================
 
 
+// -------------------------------
 // Send Message
+// -------------------------------
+
 async function sendMessage() {
 
     const text = input.value.trim();
 
+    // Don't send if both text and image are empty
     if (!text && !selectedImage) return;
 
-    // Show user message immediately
-    addMessage(
-        text || "🖼️ Image",
-        "user"
-    );
+    // Show user's message
+    if (text) {
+
+        addMessage(
+            text,
+            "user"
+        );
+
+        await saveMessage(
+            text,
+            "user"
+        );
+
+    }
+
+    // If only image was sent
+    else {
+
+        addMessage(
+            "📷 Image",
+            "user"
+        );
+
+        await saveMessage(
+            "[Image]",
+            "user"
+        );
+
+    }
 
     input.value = "";
 
-    // Save user message
-    await saveMessage(
-        text,
-        "user"
-    );
-
-    // Ask AI
-    await aiReply(
-        text,
-        selectedImage
-    );
-
-    selectedImage = null;
-    imagePreview.innerHTML = "";
-    imageUpload.value = "";
+    await aiReply(text);
 
 }
 
 
 
-// Send button
+// -------------------------------
+// Send Button
+// -------------------------------
+
 send.addEventListener(
+
     "click",
+
     sendMessage
+
 );
 
 
-// Enter key
+
+// -------------------------------
+// Enter Key
+// -------------------------------
+
 input.addEventListener(
+
     "keydown",
+
     (e) => {
 
         if (
+
             e.key === "Enter" &&
+
             !e.shiftKey
+
         ) {
 
             e.preventDefault();
@@ -763,54 +844,68 @@ input.addEventListener(
         }
 
     }
+
 );
 
 
 
-// Default Dark Theme
-document.body.classList.add("dark");
+// -------------------------------
+// Theme Toggle
+// -------------------------------
 
 if (themeToggle) {
+
+    document.body.classList.add("dark");
 
     themeToggle.innerText = "☀️";
 
     themeToggle.addEventListener(
+
         "click",
+
         () => {
 
             document.body.classList.toggle("dark");
 
             themeToggle.innerText =
+
                 document.body.classList.contains("dark")
+
                     ? "☀️"
+
                     : "🌙";
 
         }
+
     );
 
 }
 
 
 
+// -------------------------------
 // Auto Focus
+// -------------------------------
+
 window.addEventListener(
+
     "load",
+
     () => {
 
-        setTimeout(
-            () => {
+        setTimeout(() => {
 
-                input.focus();
+            input.focus();
 
-            },
-            300
-        );
+        }, 300);
 
     }
+
 );
 
 
 
-// ===============================
-// End of Script
-// ===============================
+
+// =======================================
+// End
+// =======================================
