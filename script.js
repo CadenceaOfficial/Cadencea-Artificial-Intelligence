@@ -283,6 +283,41 @@ if (attachBtn && imageUpload) {
     });
 
 }
+const attachMenu = document.getElementById("attachMenu");
+
+const pickImage = document.getElementById("pickImage");
+const pickCamera = document.getElementById("pickCamera");
+const pickDocument = document.getElementById("pickDocument");
+
+const cameraUpload = document.getElementById("cameraUpload");
+const documentUpload = document.getElementById("documentUpload");
+
+
+pickImage.addEventListener("click", () => {
+
+    imageUpload.click();
+
+    attachMenu.classList.remove("show");
+
+});
+
+
+pickCamera.addEventListener("click", () => {
+
+    cameraUpload.click();
+
+    attachMenu.classList.remove("show");
+
+});
+
+
+pickDocument.addEventListener("click", () => {
+
+    documentUpload.click();
+
+    attachMenu.classList.remove("show");
+
+});
 
 
 
