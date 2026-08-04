@@ -377,7 +377,6 @@ if (attachBtn && attachMenu) {
 
 }
 
-const attachMenu = document.getElementById("attachMenu");
 
 const pickImage = document.getElementById("pickImage");
 const pickCamera = document.getElementById("pickCamera");
