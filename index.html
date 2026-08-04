@@ -125,17 +125,49 @@
         <footer>
 
 
-            <button id="attach">
+            <div class="attachment-wrapper">
 
-                📎
+                <button id="attach">
 
-            </button>
+                    <img src="icons/plus.svg" class="footer-icon" alt="Attach">
 
+                </button>
 
+                <div id="attachMenu" class="attach-menu">
+
+                    <button id="pickImage">
+
+                        <img src="icons/image.svg" class="menu-icon">
+
+                        <span>Image</span>
+
+                    </button>
+
+                    <button id="pickCamera">
+
+                        <img src="icons/camera.svg" class="menu-icon">
+
+                        <span>Camera</span>
+
+                    </button>
+
+                    <button id="pickDocument">
+
+                        <img src="icons/document.svg" class="menu-icon">
+
+                        <span>Document</span>
+
+                    </button>
+
+                </div>
+
+            </div>
 
             <input type="file" id="imageUpload" accept="image/*" hidden>
 
+            <input type="file" id="cameraUpload" accept="image/*" capture="environment" hidden>
 
+            <input type="file" id="documentUpload" accept=".pdf,.doc,.docx,.txt" hidden>
 
             <div id="imagePreview"></div>
 
