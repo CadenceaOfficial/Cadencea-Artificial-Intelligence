@@ -605,7 +605,7 @@ async function aiReply(userPrompt, image) {
 
                     history: recentHistory,
 
-                    image: image
+                    image: selectedImage
 
                 })
 
@@ -735,8 +735,6 @@ async function aiReply(userPrompt, image) {
         // -----------------------------
         // Reset Image
         // -----------------------------
-
-        selectedImage = null;
 
         imageUpload.value = "";
 
