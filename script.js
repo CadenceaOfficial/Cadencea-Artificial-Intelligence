@@ -1177,15 +1177,22 @@ async function sendMessage() {
 
     if (imageToSend) {
 
-
         const img = document.createElement("img");
-
 
         img.src = imageToSend;
 
-
         img.className = "chat-image";
 
+
+        const imageWrapper = document.createElement("div");
+
+        imageWrapper.className = "message-content";
+
+
+        imageWrapper.appendChild(img);
+
+
+        message.appendChild(imageWrapper);
 
 
         if (text) {
@@ -1194,13 +1201,7 @@ async function sendMessage() {
 
         }
 
-
-
-        message.appendChild(img);
-
-
     }
-
 
 
 
