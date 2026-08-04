@@ -889,7 +889,7 @@ async function aiReply(text, image) {
             "Sending image:",
             image ? "YES" : "NO"
         );
-
+        console.log("Sending UID:", currentUserId);
 
         const response = await fetch(
 
@@ -910,7 +910,9 @@ async function aiReply(text, image) {
 
                     history: recentHistory,
 
-                    image: image
+                    image: image,
+
+                    userId: currentUserId
 
                 })
 

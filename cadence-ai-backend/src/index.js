@@ -81,7 +81,7 @@ export default {
 
       } = await request.json();
 
-
+      console.log("USER ID:", userId);
 
       if (!userId) {
 
