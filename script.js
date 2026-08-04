@@ -293,32 +293,20 @@ const cameraUpload = document.getElementById("cameraUpload");
 const documentUpload = document.getElementById("documentUpload");
 
 
-pickImage.addEventListener("click", () => {
-
+pickImage.addEventListener("click", function (e) {
+    e.preventDefault();
     imageUpload.click();
-
-    attachMenu.classList.remove("show");
-
 });
 
-
-pickCamera.addEventListener("click", () => {
-
+pickCamera.addEventListener("click", function (e) {
+    e.preventDefault();
     cameraUpload.click();
-
-    attachMenu.classList.remove("show");
-
 });
 
-
-pickDocument.addEventListener("click", () => {
-
+pickDocument.addEventListener("click", function (e) {
+    e.preventDefault();
     documentUpload.click();
-
-    attachMenu.classList.remove("show");
-
 });
-
 
 
 imageUpload.addEventListener("change", e => {
