@@ -776,7 +776,7 @@ button:active {
 
     padding: 0;
 
-    background: transparent;
+    background: rgba(255, 255, 255, 0.2);
 
 }
 

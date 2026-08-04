@@ -4,6 +4,21 @@
 // Part 1
 // =======================================
 
+const greetings = [
+    "Hello! Buddy",
+    "Welcome My Hero",
+    "Wanna know something? Just type",
+    "Breakup? No worries, i'm here for you",
+    "Let's create something!",
+    "What are we building today?",
+    "You are great",
+    "Being Bored? Let's Chit-Chat"
+];
+
+const randomGreeting =
+    greetings[Math.floor(Math.random() * greetings.length)];
+
+document.getElementById("greeting").innerText = randomGreeting;
 
 // Firebase
 import {
@@ -1003,7 +1018,7 @@ async function aiReply(text, image) {
 
 
 }
- // =======================================
+// =======================================
 // Cadence AI
 // Script.js
 // Part 4
