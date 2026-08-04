@@ -6,13 +6,27 @@
 
 const greetings = [
     "Hello! Buddy",
-    "Welcome My Hero",
+    "Welcome Hero!",
     "Wanna know something? Just type",
     "Breakup? I'm here for you",
     "Let's create something!",
     "What are we building today?",
-    "You are great",
-    "Being Bored? Let's Chit-Chat"
+    "You are great!!",
+    "Bored? Let's Chit-Chat",
+    "Coding?",
+    "Want a joke? just ask",
+    "Let's make something awesome!",
+    "Hey there! How can I assist you today?",
+    "Greetings! Ready to explore?",
+    "Hi! Let's get started.",
+    "Welcome back! What can I do for you?",
+    "Hello! Let's create something amazing.",
+    "Hey! Need any help?",
+    "Hi there! Let's dive in.",
+    "Welcome! Let's make magic happen.",
+    "Hello! Ready to innovate?",
+    "Tips for one-sided love? Just ask"
+
 ];
 
 const randomGreeting =
