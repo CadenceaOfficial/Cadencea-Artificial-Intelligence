@@ -500,7 +500,7 @@ onAuthStateChanged(
 // AI Communication
 // =======================================
 
-async function aiReply(userPrompt) {
+async function aiReply(userPrompt, image) {
 
     // -----------------------------
     // Typing Indicator
@@ -605,7 +605,7 @@ async function aiReply(userPrompt) {
 
                     history: recentHistory,
 
-                    image: selectedImage
+                    image: image
 
                 })
 
@@ -830,11 +830,11 @@ async function sendMessage() {
 
     imagePreview.style.display = "none";
 
-  
+
 
     input.value = "";
 
-    await aiReply(text);
+    await aiReply(text, imageToSend);
 
 }
 
