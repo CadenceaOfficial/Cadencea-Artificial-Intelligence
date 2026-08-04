@@ -2,25 +2,24 @@
    Cadence AI
    Style.css
    Part 1
-   Base + Theme + Header
+   Base + Theme + Background + Header
 ======================================= */
 
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 
-
 :root {
 
-    --bg-color: #ffffff;
-    --card-color: #f5f7fb;
-    --text-color: #111827;
+    --bg-color: #e9ecef;
+    --card-color: #f8f9fa;
+    --text-color: #1f2937;
     --secondary-text: #6b7280;
 
-    --user-message: #2563eb;
-    --ai-message: #e5e7eb;
+    --user-message: #3b82f6;
+    --ai-message: #dfe3e8;
 
-    --border-color: #d1d5db;
+    --border-color: #cbd5e1;
 
 }
 
@@ -28,19 +27,23 @@
 
 body.dark {
 
-    --bg-color: #0f172a;
-    --card-color: #111827;
-    --text-color: #f9fafb;
+    --bg-color: #111315;
+    --card-color: #202329;
+    --text-color: #e5e7eb;
     --secondary-text: #9ca3af;
 
-    --user-message: #2563eb;
-    --ai-message: #1f2937;
+    --user-message: #3b82f6;
+    --ai-message: #2a2d34;
 
     --border-color: #374151;
 
 }
 
 
+
+/* =========================
+   Reset
+========================= */
 
 
 * {
@@ -52,7 +55,6 @@ body.dark {
     font-family: "Inter", sans-serif;
 
 }
-
 
 
 
@@ -68,14 +70,13 @@ body {
 
 
 
-
 body {
 
     background: var(--bg-color);
 
     color: var(--text-color);
 
-    transition: .3s ease;
+    transition: .35s ease;
 
 }
 
@@ -100,12 +101,16 @@ body {
     background:
 
         radial-gradient(circle at 15% 20%,
-            rgba(59, 130, 246, .25),
-            transparent 25%),
+            rgba(59, 130, 246, .18),
+            transparent 30%),
 
         radial-gradient(circle at 85% 25%,
-            rgba(139, 92, 246, .25),
-            transparent 25%),
+            rgba(139, 92, 246, .16),
+            transparent 30%),
+
+        radial-gradient(circle at 50% 90%,
+            rgba(14, 165, 233, .12),
+            transparent 35%),
 
         linear-gradient(135deg,
             var(--bg-color),
@@ -114,7 +119,10 @@ body {
 
     background-size: 300% 300%;
 
-    animation: bgMove 15s ease infinite;
+    animation:
+
+        bgMove 18s ease infinite;
+
 
 }
 
@@ -122,18 +130,25 @@ body {
 
 @keyframes bgMove {
 
+
     0% {
+
         background-position: 0% 50%;
+
     }
 
 
     50% {
+
         background-position: 100% 50%;
+
     }
 
 
     100% {
+
         background-position: 0% 50%;
+
     }
 
 }
@@ -149,9 +164,9 @@ body {
 
 .app {
 
-    height: 100vh;
-
     width: 100%;
+
+    height: 100vh;
 
     display: flex;
 
@@ -172,16 +187,22 @@ header {
 
     height: 75px;
 
+    width: 100%;
+
+
     display: flex;
 
     align-items: center;
 
+
     gap: 18px;
+
 
     padding: 15px 35px;
 
 
     backdrop-filter: blur(20px);
+
 
     border-bottom:
 
@@ -192,17 +213,24 @@ header {
 
 
 
+/* Profile */
+
+
 .profile {
 
     width: 52px;
 
     height: 52px;
 
+
     border-radius: 50%;
+
 
     overflow: hidden;
 
+
     flex-shrink: 0;
+
 
     border:
 
@@ -212,11 +240,13 @@ header {
 
 
 
+
 .profile img {
 
     width: 100%;
 
     height: 100%;
+
 
     object-fit: cover;
 
@@ -224,6 +254,8 @@ header {
 
 
 
+
+/* Brand */
 
 
 .brand {
@@ -242,9 +274,9 @@ header {
 
     font-weight: 600;
 
+    color: var(--text-color);
+
 }
-
-
 
 
 
@@ -260,27 +292,27 @@ header {
 
 
 
-/* =========================
-   Theme Button
-========================= */
+/* Theme Button */
 
 
 #themeToggle {
 
     margin-left: auto;
 
+
     width: 52px;
 
     height: 52px;
+
 
     border-radius: 50%;
 
 
     display: flex;
 
-    justify-content: center;
-
     align-items: center;
+
+    justify-content: center;
 
 
     cursor: pointer;
@@ -290,6 +322,7 @@ header {
 
 
     background: var(--card-color);
+
 
     color: var(--text-color);
 
@@ -354,7 +387,7 @@ main::-webkit-scrollbar {
 
 main::-webkit-scrollbar-thumb {
 
-    background: #334155;
+    background: #475569;
 
     border-radius: 20px;
 
@@ -365,7 +398,7 @@ main::-webkit-scrollbar-thumb {
 
 
 /* =========================
-   Message Bubbles
+   Message Bubble Base
 ========================= */
 
 
@@ -383,6 +416,7 @@ main::-webkit-scrollbar-thumb {
 
     word-break: break-word;
 
+
     animation:
 
         messageIn .35s cubic-bezier(.16, 1, .3, 1);
@@ -395,6 +429,7 @@ main::-webkit-scrollbar-thumb {
 
 @keyframes messageIn {
 
+
     from {
 
         opacity: 0;
@@ -406,6 +441,7 @@ main::-webkit-scrollbar-thumb {
     }
 
 
+
     to {
 
         opacity: 1;
@@ -415,6 +451,7 @@ main::-webkit-scrollbar-thumb {
             translateY(0) scale(1);
 
     }
+
 
 }
 
@@ -431,9 +468,16 @@ main::-webkit-scrollbar-thumb {
 
     align-self: flex-start;
 
-    background: var(--ai-message);
 
-    color: var(--text-color);
+    background:
+
+        var(--ai-message);
+
+
+    color:
+
+        var(--text-color);
+
 
 
     border:
@@ -458,7 +502,11 @@ main::-webkit-scrollbar-thumb {
 
     align-self: flex-end;
 
-    background: var(--user-message);
+
+    background:
+
+        var(--user-message);
+
 
     color: white;
 
@@ -469,17 +517,20 @@ main::-webkit-scrollbar-thumb {
 
 
 /* =========================
-   Markdown Content
+   Message Content
 ========================= */
 
 
 .message-content {
+
+    width: 100%;
 
     max-width: 100%;
 
     overflow-wrap: anywhere;
 
 }
+
 
 
 
@@ -493,30 +544,40 @@ main::-webkit-scrollbar-thumb {
 
 
 
+
 .message-content ul,
 .message-content ol {
 
+
     padding-left: 25px;
+
 
     margin: 12px 0;
 
+
 }
+
 
 
 
 
 .message-content li {
 
+
     margin: 7px 0;
 
+
     line-height: 1.7;
+
 
 }
 
 
 
 
+
 .message-content blockquote {
+
 
     border-left:
 
@@ -525,9 +586,13 @@ main::-webkit-scrollbar-thumb {
 
     padding-left: 14px;
 
+
     margin: 14px 0;
 
-    color: var(--secondary-text);
+
+    color:
+
+        var(--secondary-text);
 
 }
 
@@ -542,20 +607,35 @@ main::-webkit-scrollbar-thumb {
 
 .message pre {
 
-    background: #0b1120;
 
-    color: #e5e7eb;
+    background:
 
-
-    padding: 16px;
-
-    border-radius: 14px;
+        #0b1120;
 
 
-    overflow-x: auto;
+    color:
+
+        #e5e7eb;
 
 
-    margin: 14px 0;
+    padding:
+
+        16px;
+
+
+    border-radius:
+
+        14px;
+
+
+    overflow-x:
+
+        auto;
+
+
+    margin:
+
+        14px 0;
 
 
     border:
@@ -566,25 +646,40 @@ main::-webkit-scrollbar-thumb {
 
 
 
+
+
 .message pre code {
 
-    background: none;
 
-    padding: 0;
+    background:
+
+        transparent;
+
+
+    padding:
+
+        0;
+
 
     font-family:
 
         "Fira Code",
         monospace;
 
-    font-size: 14px;
+
+    font-size:
+
+        14px;
+
 
 }
 
 
 
 
+
 .message code {
+
 
     background:
 
@@ -596,12 +691,16 @@ main::-webkit-scrollbar-thumb {
         3px 6px;
 
 
-    border-radius: 6px;
+    border-radius:
+
+        6px;
+
 
     font-family:
 
         "Fira Code",
         monospace;
+
 
 }
 
@@ -610,42 +709,125 @@ main::-webkit-scrollbar-thumb {
 
 
 /* =========================
-   Images In Chat
+   Chat Images
 ========================= */
 
 
 .chat-image {
 
-    max-width: 260px;
 
-    max-height: 260px;
+    max-width:
 
-    width: auto;
-
-    height: auto;
+        260px;
 
 
-    display: block;
+    max-height:
+
+        260px;
 
 
-    border-radius: 16px;
+    width:
+
+        auto;
 
 
-    object-fit: contain;
+    height:
+
+        auto;
+
+
+    display:
+
+        block;
+
+
+    border-radius:
+
+        16px;
+
+
+    object-fit:
+
+        contain;
+
 
 }
 
 
 
-.preview-image {
 
-    width: 90px;
 
-    height: 90px;
+/* =========================
+   Tables
+========================= */
 
-    object-fit: cover;
 
-    border-radius: 16px;
+.message-content table {
+
+
+    border-collapse:
+
+        collapse;
+
+
+    width:
+
+        100%;
+
+
+    display:
+
+        block;
+
+
+    overflow-x:
+
+        auto;
+
+
+    margin:
+
+        15px 0;
+
+
+}
+
+
+
+
+
+.message-content th,
+.message-content td {
+
+
+    border:
+
+        1px solid var(--border-color);
+
+
+    padding:
+
+        8px 12px;
+
+
+    text-align:
+
+        left;
+
+
+}
+
+
+
+
+
+.message-content th {
+
+
+    background:
+
+        rgba(59, 130, 246, .15);
+
 
 }
 
@@ -653,9 +835,8 @@ main::-webkit-scrollbar-thumb {
    Cadence AI
    Style.css
    Part 3
-   Footer + Buttons + Attachment Popup
+   Footer + Buttons + Attachment
 ======================================= */
-
 
 
 /* =========================
@@ -674,7 +855,9 @@ footer {
     gap: 12px;
 
 
-    backdrop-filter: blur(25px);
+    backdrop-filter:
+
+        blur(25px);
 
 
     border-top:
@@ -697,7 +880,9 @@ footer {
 
 textarea {
 
+
     flex: 1;
+
 
     resize: none;
 
@@ -717,15 +902,21 @@ textarea {
     font-size: 16px;
 
 
-    color: var(--text-color);
+    color:
+
+        var(--text-color);
 
 
-    background: var(--card-color);
+    background:
+
+        var(--card-color);
 
 
     border:
 
         1px solid var(--border-color);
+
+
 
 }
 
@@ -733,7 +924,11 @@ textarea {
 
 textarea::placeholder {
 
-    color: var(--secondary-text);
+
+    color:
+
+        var(--secondary-text);
+
 
 }
 
@@ -748,7 +943,9 @@ textarea::placeholder {
 
 button {
 
+
     width: 56px;
+
 
     height: 56px;
 
@@ -761,31 +958,51 @@ button {
         1px solid var(--border-color);
 
 
-    background: var(--card-color);
+    background:
+
+        var(--card-color);
 
 
-    color: var(--text-color);
+    color:
+
+        var(--text-color);
 
 
     cursor: pointer;
 
 
-    display: flex;
+    display:
 
-    justify-content: center;
-
-    align-items: center;
+        flex;
 
 
-    transition: .25s;
+    align-items:
+
+        center;
+
+
+    justify-content:
+
+        center;
+
+
+    transition:
+
+        .25s;
 
 }
 
 
 
+
+
 button:hover {
 
-    transform: translateY(-3px);
+
+    transform:
+
+        translateY(-3px);
+
 
 }
 
@@ -800,11 +1017,17 @@ button:hover {
 
 .footer-icon {
 
+
     width: 26px;
+
 
     height: 26px;
 
-    object-fit: contain;
+
+    object-fit:
+
+        contain;
+
 
 }
 
@@ -812,7 +1035,13 @@ button:hover {
 
 
 
+/* =========================
+   Send Button
+========================= */
+
+
 #send {
+
 
     background:
 
@@ -821,15 +1050,43 @@ button:hover {
             #6366f1);
 
 
-    border: none;
+    border:
+
+        none;
+
 
 }
 
 
 
+
+
 #send .footer-icon {
 
-    filter: brightness(0) invert(1);
+
+    filter:
+
+        brightness(0) invert(1);
+
+
+}
+
+
+
+
+
+/* =========================
+   Attachment Wrapper
+========================= */
+
+
+.attachment-wrapper {
+
+
+    position:
+
+        relative;
+
 
 }
 
@@ -842,39 +1099,57 @@ button:hover {
 ========================= */
 
 
-.attachment-wrapper {
-
-    position: relative;
-
-}
-
-
-
 .attach-menu {
 
-    position: absolute;
+
+    position:
+
+        absolute;
 
 
-    bottom: 65px;
+    bottom:
 
-    left: 0;
-
-
-    display: flex;
-
-    flex-direction: column;
+        65px;
 
 
-    gap: 10px;
+    left:
+
+        0;
 
 
-    padding: 12px;
+
+    display:
+
+        flex;
 
 
-    border-radius: 18px;
+    flex-direction:
+
+        column;
 
 
-    background: var(--card-color);
+    gap:
+
+        10px;
+
+
+
+    padding:
+
+        12px;
+
+
+
+    border-radius:
+
+        18px;
+
+
+
+    background:
+
+        var(--card-color);
+
 
 
     border:
@@ -882,24 +1157,36 @@ button:hover {
         1px solid var(--border-color);
 
 
+
     box-shadow:
+
 
         0 15px 40px rgba(0, 0, 0, .25);
 
 
 
-    opacity: 0;
+    opacity:
+
+        0;
 
 
-    pointer-events: none;
+    pointer-events:
+
+        none;
+
 
 
     transform:
 
+
         translateY(15px) scale(.9);
 
 
-    transition: .25s ease;
+
+    transition:
+
+        .25s ease;
+
 
 }
 
@@ -909,15 +1196,22 @@ button:hover {
 
 .attach-menu.show {
 
-    opacity: 1;
+
+    opacity:
+
+        1;
 
 
-    pointer-events: auto;
+    pointer-events:
+
+        auto;
 
 
     transform:
 
+
         translateY(0) scale(1);
+
 
 }
 
@@ -927,12 +1221,21 @@ button:hover {
 
 .attach-menu button {
 
-    width: 45px;
 
-    height: 45px;
+    width:
+
+        45px;
 
 
-    border-radius: 14px;
+    height:
+
+        45px;
+
+
+    border-radius:
+
+        14px;
+
 
 }
 
@@ -942,9 +1245,16 @@ button:hover {
 
 .menu-icon {
 
-    width: 25px;
 
-    height: 25px;
+    width:
+
+        25px;
+
+
+    height:
+
+        25px;
+
 
 }
 
@@ -959,37 +1269,72 @@ button:hover {
 
 #imagePreview {
 
-    position: absolute;
+
+    position:
+
+        absolute;
 
 
-    bottom: 75px;
+
+    bottom:
+
+        75px;
 
 
-    left: 20px;
+
+    left:
+
+        20px;
 
 
-    display: flex;
+
+    display:
+
+        flex;
 
 
-    gap: 10px;
+
+    gap:
+
+        10px;
 
 
-    padding: 8px;
+
+    padding:
+
+        8px;
 
 
 }
 
 
 
+
+
 #imagePreview img {
 
-    max-width: 90px;
 
-    max-height: 90px;
+    width:
 
-    border-radius: 16px;
+        90px;
 
-    object-fit: cover;
+
+    height:
+
+        90px;
+
+
+
+    object-fit:
+
+        cover;
+
+
+
+    border-radius:
+
+        16px;
+
 
 }
 
@@ -1004,34 +1349,61 @@ button:hover {
 
 .copy-btn {
 
-    margin-top: 14px;
+
+    margin-top:
+
+        14px;
 
 
-    width: 34px;
 
-    height: 34px;
+    width:
 
-
-    border-radius: 10px;
+        34px;
 
 
-    padding: 0;
+
+    height:
+
+        34px;
 
 
-    font-size: 16px;
+
+    border-radius:
+
+        10px;
+
+
+
+    padding:
+
+        0;
 
 
 }
 
 
 
+
+
 .copy-icon {
 
-    width: 18px;
 
-    height: 18px;
+    width:
 
-    object-fit: contain;
+        18px;
+
+
+
+    height:
+
+        18px;
+
+
+
+    object-fit:
+
+        contain;
+
 
 }
 
@@ -1039,9 +1411,8 @@ button:hover {
    Cadence AI
    Style.css
    Part 4
-   Welcome Screen + Typing + Responsive
+   Welcome + Typing + Responsive
 ======================================= */
-
 
 
 /* =========================
@@ -1070,13 +1441,19 @@ button:hover {
     height: 8px;
 
 
-    background: #94a3b8;
+    background:
+
+        #94a3b8;
 
 
-    border-radius: 50%;
+    border-radius:
+
+        50%;
 
 
-    animation: bounce 1.2s infinite;
+    animation:
+
+        bounce 1.2s infinite;
 
 }
 
@@ -1084,7 +1461,9 @@ button:hover {
 
 .typing span:nth-child(2) {
 
-    animation-delay: .2s;
+    animation-delay:
+
+        .2s;
 
 }
 
@@ -1092,30 +1471,46 @@ button:hover {
 
 .typing span:nth-child(3) {
 
-    animation-delay: .4s;
+    animation-delay:
+
+        .4s;
 
 }
 
 
 
+
+
 @keyframes bounce {
+
 
     0%,
     60%,
     100% {
 
-        transform: translateY(0);
+        transform:
 
-        opacity: .5;
+            translateY(0);
+
+
+        opacity:
+
+            .5;
 
     }
 
 
+
     30% {
 
-        transform: translateY(-8px);
+        transform:
 
-        opacity: 1;
+            translateY(-8px);
+
+
+        opacity:
+
+            1;
 
     }
 
@@ -1132,10 +1527,15 @@ button:hover {
 
 .welcome-overlay {
 
-    position: fixed;
+
+    position:
+
+        fixed;
 
 
-    inset: 0;
+    inset:
+
+        0;
 
 
     background:
@@ -1143,37 +1543,62 @@ button:hover {
         rgba(0, 0, 0, .55);
 
 
-    backdrop-filter: blur(12px);
+    backdrop-filter:
+
+        blur(12px);
 
 
-    display: flex;
+    display:
+
+        flex;
 
 
-    justify-content: center;
+    justify-content:
+
+        center;
 
 
-    align-items: center;
+    align-items:
+
+        center;
 
 
-    z-index: 100;
+    z-index:
+
+        100;
+
 
 }
 
 
 
 
+
 .welcome-box {
 
-    width: 380px;
+
+    width:
+
+        380px;
 
 
-    padding: 35px;
+
+    padding:
+
+        35px;
 
 
-    text-align: center;
+
+    text-align:
+
+        center;
 
 
-    border-radius: 25px;
+
+    border-radius:
+
+        25px;
+
 
 
     background:
@@ -1181,7 +1606,11 @@ button:hover {
         rgba(255, 255, 255, .08);
 
 
-    backdrop-filter: blur(25px);
+
+    backdrop-filter:
+
+        blur(25px);
+
 
 
     border:
@@ -1189,12 +1618,17 @@ button:hover {
         1px solid rgba(255, 255, 255, .15);
 
 
+
     box-shadow:
 
         0 20px 60px rgba(0, 0, 0, .5);
 
 
-    animation: popup .4s ease;
+
+    animation:
+
+        popup .4s ease;
+
 
 }
 
@@ -1204,20 +1638,32 @@ button:hover {
 
 @keyframes popup {
 
+
     from {
 
-        opacity: 0;
+        opacity:
 
-        transform: scale(.8);
+            0;
+
+
+        transform:
+
+            scale(.8);
 
     }
 
 
+
     to {
 
-        opacity: 1;
+        opacity:
 
-        transform: scale(1);
+            1;
+
+
+        transform:
+
+            scale(1);
 
     }
 
@@ -1229,32 +1675,54 @@ button:hover {
 
 .welcome-icon img {
 
-    border-radius: 50%;
+
+    border-radius:
+
+        50%;
+
 
 }
+
+
 
 
 
 .welcome-box h2 {
 
-    margin-top: 15px;
+
+    margin-top:
+
+        15px;
 
 
-    font-size: 28px;
+    font-size:
+
+        28px;
 
 
-    color: white;
+    color:
+
+        white;
+
 
 }
 
 
 
+
+
 .welcome-box p {
 
-    color: #cbd5e1;
+
+    color:
+
+        #cbd5e1;
 
 
-    margin: 20px 0;
+    margin:
+
+        20px 0;
+
 
 }
 
@@ -1264,23 +1732,37 @@ button:hover {
 
 .welcome-box button {
 
-    width: 100%;
+
+    width:
+
+        100%;
 
 
     background:
+
 
         linear-gradient(135deg,
             #3b82f6,
             #8b5cf6);
 
 
-    color: white;
+
+    color:
+
+        white;
 
 
-    border: none;
+
+    border:
+
+        none;
 
 
-    font-weight: 600;
+
+    font-weight:
+
+        600;
+
 
 }
 
@@ -1298,7 +1780,11 @@ button:hover {
 
     header {
 
-        padding: 15px 20px;
+
+        padding:
+
+            15px 20px;
+
 
     }
 
@@ -1306,7 +1792,11 @@ button:hover {
 
     .message {
 
-        max-width: 90%;
+
+        max-width:
+
+            90%;
+
 
     }
 
@@ -1314,10 +1804,13 @@ button:hover {
 
     main {
 
-        padding: 20px;
+
+        padding:
+
+            20px;
+
 
     }
-
 
 
 }
@@ -1327,67 +1820,114 @@ button:hover {
 
 
 /* =========================
-   Mobile Phone
+   Mobile
 ========================= */
 
 
 @media(max-width:480px) {
 
 
+
     html,
     body {
 
-        overflow: hidden;
+        overflow:
+
+            hidden;
 
     }
+
 
 
 
     .app {
 
-        height: 100dvh;
+
+        height:
+
+            100dvh;
+
 
     }
+
+
 
 
 
     header {
 
-        height: 60px;
 
-        padding: 10px 12px;
+        height:
 
-        gap: 10px;
+            60px;
+
+
+        padding:
+
+            10px 12px;
+
+
+        gap:
+
+            10px;
+
 
     }
+
+
 
 
 
     .profile {
 
-        width: 36px;
 
-        height: 36px;
+        width:
+
+            36px;
+
+
+        height:
+
+            36px;
+
 
     }
+
+
 
 
 
     .brand h1 {
 
-        font-size: 17px;
+
+        font-size:
+
+            17px;
+
 
     }
 
 
 
+
+
     #themeToggle {
 
-        width: 38px;
 
-        height: 38px;
+        width:
 
-        font-size: 16px;
+            38px;
+
+
+        height:
+
+            38px;
+
+
+        font-size:
+
+            16px;
+
 
     }
 
@@ -1397,37 +1937,87 @@ button:hover {
 
     main {
 
-        padding: 15px;
 
-        gap: 12px;
+        padding:
+
+            15px;
+
+
+        gap:
+
+            12px;
+
 
     }
 
 
 
+
+
+    /* FIXED MOBILE MESSAGE SIZE */
 
 
     .message {
 
-        max-width: 95%;
 
-        width: auto;
+        max-width:
 
-        padding: 14px 16px;
+            95%;
 
-        font-size: 14px;
 
-        line-height: 1.6;
+        min-width:
+
+            70%;
+
+
+        width:
+
+            auto;
+
+
+        padding:
+
+            14px 16px;
+
+
+        font-size:
+
+            14px;
+
+
+        line-height:
+
+            1.6;
+
+
+        overflow:
+
+            hidden;
+
 
     }
 
+
+
+
+
     .message-content {
 
-        width: 100%;
 
-        word-break: break-word;
+        width:
 
-        overflow-wrap: anywhere;
+            100%;
+
+
+        max-width:
+
+            100%;
+
+
+        overflow-wrap:
+
+            anywhere;
+
 
     }
 
@@ -1437,9 +2027,16 @@ button:hover {
 
     .chat-image {
 
-        max-width: 100%;
 
-        height: auto;
+        max-width:
+
+            100%;
+
+
+        height:
+
+            auto;
+
 
     }
 
@@ -1449,9 +2046,16 @@ button:hover {
 
     footer {
 
-        padding: 8px;
 
-        gap: 6px;
+        padding:
+
+            8px;
+
+
+        gap:
+
+            6px;
+
 
     }
 
@@ -1461,11 +2065,21 @@ button:hover {
 
     footer button {
 
-        width: 42px;
 
-        height: 42px;
+        width:
 
-        border-radius: 14px;
+            42px;
+
+
+        height:
+
+            42px;
+
+
+        border-radius:
+
+            14px;
+
 
     }
 
@@ -1475,9 +2089,16 @@ button:hover {
 
     .footer-icon {
 
-        width: 22px;
 
-        height: 22px;
+        width:
+
+            22px;
+
+
+        height:
+
+            22px;
+
 
     }
 
@@ -1487,11 +2108,21 @@ button:hover {
 
     textarea {
 
-        height: 42px;
 
-        padding: 10px;
+        height:
 
-        font-size: 14px;
+            42px;
+
+
+        padding:
+
+            10px;
+
+
+        font-size:
+
+            14px;
+
 
     }
 
@@ -1501,17 +2132,30 @@ button:hover {
 
     .attach-menu {
 
-        bottom: 55px;
+
+        bottom:
+
+            55px;
+
 
     }
 
 
 
+
+
     .welcome-box {
 
-        width: 90%;
 
-        padding: 25px;
+        width:
+
+            90%;
+
+
+        padding:
+
+            25px;
+
 
     }
 
@@ -1522,12 +2166,12 @@ button:hover {
    Cadence AI
    Style.css
    Part 5
-   Final Fixes + Mobile Stability
+   Final Fixes + Stability
 ======================================= */
 
 
 /* =========================
-   Prevent Overflow
+   Overflow Protection
 ========================= */
 
 
@@ -1554,52 +2198,31 @@ code {
 
 
 /* =========================
-   Tables From AI
+   Mobile Image Safety
 ========================= */
 
 
-.message-content table {
+.chat-image {
 
-    border-collapse: collapse;
+    display:
 
-    width: 100%;
-
-    display: block;
-
-    overflow-x: auto;
-
-    margin: 15px 0;
-
-}
+        block;
 
 
+    max-width:
 
-.message-content th,
-.message-content td {
-
-    border:
-
-        1px solid var(--border-color);
+        100%;
 
 
-    padding:
+    height:
 
-        8px 12px;
-
-
-    text-align: left;
-
-}
+        auto;
 
 
+    object-fit:
 
+        contain;
 
-
-.message-content th {
-
-    background:
-
-        rgba(59, 130, 246, .15);
 
 }
 
@@ -1608,107 +2231,51 @@ code {
 
 
 /* =========================
-   Smooth Scroll Area
-========================= */
-
-
-.chat-container {
-
-    overflow-y: auto;
-
-    scroll-behavior: smooth;
-
-}
-
-
-
-
-
-/* =========================
-   Mobile Final Fixes
+   Mobile Footer Protection
 ========================= */
 
 
 @media(max-width:480px) {
 
 
+    footer {
 
-    .message {
 
-        max-width: 95%;
+        width:
 
-        overflow: hidden;
+            100%;
+
+
+        overflow:
+
+            hidden;
+
 
     }
 
 
 
+    footer textarea {
 
-    .message-content {
 
-        width: auto;
+        min-width:
 
-        max-width: 100%;
+            0;
 
-        overflow-wrap: anywhere;
 
     }
 
 
 
+    #send,
+    #voice,
+    #attach {
 
 
-    .message pre {
+        flex-shrink:
 
-        font-size: 12px;
+            0;
 
-        padding: 12px;
-
-    }
-
-
-
-
-
-    .message code {
-
-        font-size: 12px;
-
-    }
-
-
-
-
-
-    #imagePreview {
-
-        bottom: 60px;
-
-        left: 8px;
-
-    }
-
-
-
-
-
-    #imagePreview img {
-
-        width: 70px;
-
-        height: 70px;
-
-    }
-
-
-
-
-
-    .attach-menu button {
-
-        width: 42px;
-
-        height: 42px;
 
     }
 
@@ -1721,19 +2288,18 @@ code {
 
 
 /* =========================
-   Desktop Image Safety
+   Smooth Chat Experience
 ========================= */
 
 
-.chat-image {
+main {
 
-    max-width: 260px;
+    scroll-behavior:
 
-    max-height: 260px;
-
-    object-fit: contain;
+        smooth;
 
 }
+
 
 
 
@@ -1745,11 +2311,43 @@ code {
 
 ::selection {
 
-    background: #2563eb;
 
-    color: white;
+    background:
+
+        #3b82f6;
+
+
+    color:
+
+        white;
+
 
 }
+
+
+
+
+
+/* =========================
+   Scrollbar (Firefox)
+========================= */
+
+
+* {
+
+
+    scrollbar-width:
+
+        thin;
+
+
+    scrollbar-color:
+
+        #475569 transparent;
+
+
+}
+
 
 
 
