@@ -1108,92 +1108,36 @@ button:hover {
 
 .attach-menu {
 
+    position: absolute;
 
-    position:
+    bottom: 70px;
 
-        absolute;
+    left: 50%;
 
+    transform: translateX(-50%) translateY(15px) scale(.9);
 
-    bottom:
+    display: flex;
 
-        65px;
+    flex-direction: column;
 
+    gap: 10px;
 
-    left:
+    padding: 12px;
 
-        0;
+    border-radius: 18px;
 
+    background: var(--card-color);
 
-
-    display:
-
-        flex;
-
-
-    flex-direction:
-
-        column;
-
-
-    gap:
-
-        10px;
-
-
-
-    padding:
-
-        12px;
-
-
-
-    border-radius:
-
-        18px;
-
-
-
-    background:
-
-        var(--card-color);
-
-
-
-    border:
-
-        1px solid var(--border-color);
-
-
+    border: 1px solid var(--border-color);
 
     box-shadow:
-
-
         0 15px 40px rgba(0, 0, 0, .25);
 
+    opacity: 0;
 
+    pointer-events: none;
 
-    opacity:
-
-        0;
-
-
-    pointer-events:
-
-        none;
-
-
-
-    transform:
-
-
-        translateY(15px) scale(.9);
-
-
-
-    transition:
-
-        .25s ease;
-
+    transition: .25s ease;
 
 }
 
@@ -1203,22 +1147,12 @@ button:hover {
 
 .attach-menu.show {
 
+    opacity: 1;
 
-    opacity:
-
-        1;
-
-
-    pointer-events:
-
-        auto;
-
+    pointer-events: auto;
 
     transform:
-
-
-        translateY(0) scale(1);
-
+        translateX(-50%) translateY(0) scale(1);
 
 }
 
