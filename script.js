@@ -1233,7 +1233,73 @@ send.addEventListener(
 );
 
 
+// ===============================
+// Voice Input
+// ===============================
 
+if (voiceBtn) {
+
+    const SpeechRecognition =
+        window.SpeechRecognition ||
+        window.webkitSpeechRecognition;
+
+
+    if (SpeechRecognition) {
+
+        const recognition = new SpeechRecognition();
+
+
+        recognition.continuous = false;
+
+        recognition.lang = "en-US";
+
+        recognition.interimResults = false;
+
+
+
+        voiceBtn.addEventListener("click", () => {
+
+            recognition.start();
+
+            voiceBtn.style.transform = "scale(1.1)";
+
+        });
+
+
+
+        recognition.onresult = (event) => {
+
+            const speechText =
+                event.results[0][0].transcript;
+
+
+            input.value += speechText;
+
+
+        };
+
+
+
+        recognition.onend = () => {
+
+            voiceBtn.style.transform = "scale(1)";
+
+        };
+
+
+    }
+
+    else {
+
+        voiceBtn.style.display = "none";
+
+        console.log(
+            "Speech recognition not supported"
+        );
+
+    }
+
+}
 
 
 
