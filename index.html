@@ -50,7 +50,7 @@
 
             <button id="googleLogin">
 
-                Continue with Google  
+                Continue with Google
 
                 <img src="https://github.com/CadenceaOfficial/Cadencea-Artificial-Intelligence/blob/main/GOOGLE%20TRANSPARENT%20ICON.webp?raw=true"
                     width="20" height="20">
@@ -116,38 +116,33 @@
         <main id="chat"></main>
         <footer>
 
-
+            <!-- Attachment -->
             <div class="attachment-wrapper">
 
-                <button id="attach">
+                <button id="attach" type="button">
 
-                    <img src="https://raw.githubusercontent.com/CadenceaOfficial/Cadencea-Artificial-Intelligence/eb2bc4779b424f0c5347ad733df82ce5a93795cf/icons/plus%20.svg"
-                        class="footer-icon" height="40" width="40">
+                    <img src="https://raw.githubusercontent.com/CadenceaOfficial/Cadencea-Artificial-Intelligence/ec8eccc96f4791f5fe4046657987756b3e952104/icons/plus%20.svg"
+                        class="footer-icon" alt="Attach">
 
                 </button>
 
                 <div id="attachMenu" class="attach-menu">
 
-                    <button type="button" id="pickImage">
+                    <button id="pickImage" type="button">
 
-                        <img src="icons/photos.svg" class="menu-icon" height="40" width="40">
-
-
+                        <img src="icons/photos.svg" class="menu-icon" alt="Gallery">
 
                     </button>
 
-                    <button type="button" id="pickCamera">
-                        <img src="icons/camera.svg" class="menu-icon" height="40" width="40">
+                    <button id="pickCamera" type="button">
 
-
+                        <img src="icons/camera.svg" class="menu-icon" alt="Camera">
 
                     </button>
 
-                    <button type="button" id="pickDocument">
+                    <button id="pickDocument" type="button">
 
-                        <img src="icons/documents.svg" class="menu-icon" height="40" width="40">
-
-
+                        <img src="icons/documents.svg" class="menu-icon" alt="Document">
 
                     </button>
 
@@ -155,35 +150,42 @@
 
             </div>
 
+
+            <!-- Hidden Inputs -->
+
             <input type="file" id="imageUpload" accept="image/*" hidden>
 
             <input type="file" id="cameraUpload" accept="image/*" capture="environment" hidden>
 
             <input type="file" id="documentUpload" accept=".pdf,.doc,.docx,.txt" hidden>
 
+
+            <!-- Image Preview -->
+
             <div id="imagePreview"></div>
 
 
+            <!-- Message Box -->
 
-            <textarea id="prompt" placeholder="Message Cadence AI..." rows="1">
-            </textarea>
-
-
-
-            <button id="voice">
-
-                <img src="icons/sound.png" class="footer-icon" alt="Voice" height="40" width="40">
-
-            </button>
+            <textarea id="prompt" rows="1" placeholder="Message Cadence AI..."></textarea>
 
 
+            <!-- Voice -->
 
-            <button id="send">
+            <button id="voice" type="button">
 
-                <img src="icons/send.svg" class="footer-icon" alt="Send" height="40" width="40">
+                <img src="icons/sound.png" class="footer-icon" alt="Voice">
 
             </button>
 
+
+            <!-- Send -->
+
+            <button id="send" type="button">
+
+                <img src="icons/send.svg" class="footer-icon" alt="Send">
+
+            </button>
 
         </footer>
 

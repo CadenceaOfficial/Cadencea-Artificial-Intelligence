@@ -5,46 +5,56 @@
    Base + Theme + Background + Header
 ======================================= */
 
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
+/* =========================
+   Theme Colors
+========================= */
 
 :root {
 
-    --bg-color: #e9ecef;
-    --card-color: #f8f9fa;
-    --text-color: #1f2937;
-    --secondary-text: #6b7280;
+    --bg: #edf1f5;
+    --surface: #f7f9fb;
+    --surface-2: #e7ebf0;
 
-    --user-message: #3b82f6;
-    --ai-message: #dfe3e8;
+    --text: #1f2937;
+    --text-light: #6b7280;
 
-    --border-color: #cbd5e1;
+    --border: #d7dde5;
+
+    --accent: #3b82f6;
+    --accent2: #6366f1;
+
+    --user: #2563eb;
+    --assistant: #e5e9ef;
 
 }
-
 
 
 body.dark {
 
-    --bg-color: #111315;
-    --card-color: #202329;
-    --text-color: #e5e7eb;
-    --secondary-text: #9ca3af;
+    --bg: #101215;
+    --surface: #1a1d22;
+    --surface-2: #242830;
 
-    --user-message: #3b82f6;
-    --ai-message: #2a2d34;
+    --text: #f3f4f6;
+    --text-light: #9ca3af;
 
-    --border-color: #374151;
+    --border: #313640;
+
+    --accent: #4f8cff;
+    --accent2: #7c6cff;
+
+    --user: #2563eb;
+    --assistant: #252a33;
 
 }
-
 
 
 /* =========================
    Reset
 ========================= */
-
 
 * {
 
@@ -56,45 +66,34 @@ body.dark {
 
 }
 
-
 html,
 body {
 
     width: 100%;
-    min-height: 100%;
+    height: 100%;
     overflow: hidden;
 
 }
 
-
-
 body {
 
-    background: var(--bg-color);
+    background: var(--bg);
+    color: var(--text);
 
-    color: var(--text-color);
-
-    transition: .35s ease;
+    transition: .30s ease;
 
 }
-
-
-
 
 
 /* =========================
    Animated Background
 ========================= */
 
-
 .background {
 
     position: fixed;
-
     inset: 0;
-
     z-index: -1;
-
 
     background:
 
@@ -102,32 +101,25 @@ body {
             rgba(59, 130, 246, .18),
             transparent 30%),
 
-        radial-gradient(circle at 85% 25%,
+        radial-gradient(circle at 80% 20%,
             rgba(139, 92, 246, .16),
-            transparent 30%),
+            transparent 32%),
 
         radial-gradient(circle at 50% 90%,
             rgba(14, 165, 233, .12),
-            transparent 35%),
+            transparent 38%),
 
         linear-gradient(135deg,
-            var(--bg-color),
-            var(--card-color));
-
+            var(--bg),
+            var(--surface));
 
     background-size: 300% 300%;
 
-    animation:
-
-        bgMove 18s ease infinite;
-
+    animation: bgMove 18s ease infinite;
 
 }
 
-
-
 @keyframes bgMove {
-
 
     0% {
 
@@ -135,13 +127,11 @@ body {
 
     }
 
-
     50% {
 
         background-position: 100% 50%;
 
     }
-
 
     100% {
 
@@ -152,193 +142,142 @@ body {
 }
 
 
-
-
-
 /* =========================
    Main App
 ========================= */
 
-
 .app {
 
     width: 100%;
-
     height: 100dvh;
 
     display: flex;
-
     flex-direction: column;
 
 }
-
-
-
 
 
 /* =========================
    Header
 ========================= */
 
-
 header {
 
-    height: 75px;
-
-    width: 100%;
-
+    height: 76px;
 
     display: flex;
-
     align-items: center;
-
 
     gap: 18px;
 
+    padding: 14px 28px;
 
-    padding: 15px 35px;
+    background: rgba(255, 255, 255, .05);
 
+    backdrop-filter: blur(18px);
 
-    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
 
-
-    border-bottom:
-
-        1px solid var(--border-color);
+    flex-shrink: 0;
 
 }
 
 
-
-
-/* Profile */
-
+/* =========================
+   Profile
+========================= */
 
 .profile {
 
     width: 52px;
-
     height: 52px;
 
-
     border-radius: 50%;
-
-
     overflow: hidden;
 
+    border: 2px solid var(--border);
 
     flex-shrink: 0;
 
-
-    border:
-
-        2px solid var(--border-color);
-
 }
-
-
-
 
 .profile img {
 
     width: 100%;
-
     height: 100%;
-
 
     object-fit: cover;
 
 }
 
 
-
-
-/* Brand */
-
+/* =========================
+   Brand
+========================= */
 
 .brand {
 
     display: flex;
-
     flex-direction: column;
 
 }
 
-
-
 .brand h1 {
 
-    font-size: 23px;
-
+    font-size: 22px;
     font-weight: 600;
 
-    color: var(--text-color);
+    color: var(--text);
 
 }
-
-
 
 .brand p {
 
+    margin-top: 3px;
+
     font-size: 14px;
 
-    color: var(--secondary-text);
+    color: var(--text-light);
 
 }
 
 
-
-
-
-/* Theme Button */
-
+/* =========================
+   Theme Button
+========================= */
 
 #themeToggle {
 
     margin-left: auto;
 
+    width: 50px;
+    height: 50px;
 
-    width: 52px;
-
-    height: 52px;
-
+    border: none;
 
     border-radius: 50%;
 
+    background: var(--surface);
 
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
+    color: var(--text);
 
     cursor: pointer;
 
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     font-size: 22px;
-
-
-    background: var(--card-color);
-
-
-    color: var(--text-color);
-
-
-    border:
-
-        1px solid var(--border-color);
-
 
     transition: .25s;
 
 }
 
-
-
 #themeToggle:hover {
 
-    transform: translateY(-3px);
+    transform: translateY(-2px);
+
+    background: var(--surface-2);
 
 }
 
@@ -354,185 +293,165 @@ header {
    Chat Area
 ========================= */
 
-
 main {
 
     flex: 1;
 
+    min-height: 0;
+
     overflow-y: auto;
 
-    padding: 35px;
+    overflow-x: hidden;
 
     display: flex;
 
     flex-direction: column;
 
-    gap: 22px;
+    gap: 18px;
+
+    padding: 28px;
 
     scroll-behavior: smooth;
 
 }
 
-
-
 main::-webkit-scrollbar {
 
-    width: 7px;
+    width: 8px;
 
 }
-
-
 
 main::-webkit-scrollbar-thumb {
 
-    background: #475569;
+    background: #5b6472;
 
-    border-radius: 20px;
+    border-radius: 50px;
 
 }
 
 
-
-
-
 /* =========================
-   Message Bubble Base
+   Message Bubble
 ========================= */
-
 
 .message {
 
-    max-width: 72%;
+    position: relative;
 
-    padding: 16px 20px;
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 10px;
+
+    width: fit-content;
+
+    max-width: min(75%, 700px);
+
+    padding: 16px 18px;
 
     border-radius: 22px;
 
-    line-height: 1.7;
+    line-height: 1.75;
 
-    overflow-wrap: break-word;
+    font-size: 15px;
 
     word-break: break-word;
 
+    overflow-wrap: anywhere;
 
-    animation:
+    animation: messageIn .28s ease;
 
-        messageIn .35s cubic-bezier(.16, 1, .3, 1);
     flex-shrink: 0;
 
 }
 
 
-
-
-
 @keyframes messageIn {
-
 
     from {
 
         opacity: 0;
 
-        transform:
-
-            translateY(15px) scale(.98);
+        transform: translateY(12px);
 
     }
-
-
 
     to {
 
         opacity: 1;
 
-        transform:
-
-            translateY(0) scale(1);
+        transform: translateY(0);
 
     }
-
 
 }
 
 
-
-
-
 /* =========================
-   AI Message
+   AI Bubble
 ========================= */
-
 
 .ai {
 
     align-self: flex-start;
 
+    background: var(--assistant);
 
-    background:
+    color: var(--text);
 
-        var(--ai-message);
-
-
-    color:
-
-        var(--text-color);
-
-
-
-    border:
-
-        1px solid var(--border-color);
-
-
-    margin-left: 15px;
+    border: 1px solid var(--border);
 
 }
 
 
-
-
-
 /* =========================
-   User Message
+   User Bubble
 ========================= */
-
 
 .user {
 
     align-self: flex-end;
 
-
-    background:
-
-        var(--user-message);
-
+    background: linear-gradient(135deg,
+            var(--accent),
+            var(--accent2));
 
     color: white;
 
 }
 
 
-
-
-
 /* =========================
    Message Content
 ========================= */
-
 
 .message-content {
 
     width: 100%;
 
-    max-width: 100%;
+    min-width: 0;
 
     overflow-wrap: anywhere;
+
+    word-break: break-word;
+
+}
+
+.message-content>*:first-child {
+
+    margin-top: 0;
+
+}
+
+.message-content>*:last-child {
+
+    margin-bottom: 0;
 
 }
 
 
-
-
+/* Paragraph */
 
 .message-content p {
 
@@ -541,292 +460,210 @@ main::-webkit-scrollbar-thumb {
 }
 
 
-
-
+/* Lists */
 
 .message-content ul,
 .message-content ol {
 
-
-    padding-left: 25px;
-
-
     margin: 12px 0;
 
+    padding-left: 22px;
 
 }
-
-
-
-
 
 .message-content li {
 
-
-    margin: 7px 0;
-
-
-    line-height: 1.7;
-
+    margin: 6px 0;
 
 }
 
 
-
-
+/* Blockquote */
 
 .message-content blockquote {
 
-
-    border-left:
-
-        4px solid #3b82f6;
-
+    margin: 14px 0;
 
     padding-left: 14px;
 
+    border-left: 4px solid var(--accent);
 
-    margin: 14px 0;
-
-
-    color:
-
-        var(--secondary-text);
+    color: var(--text-light);
 
 }
 
 
+/* Links */
 
+.message-content a {
+
+    color: var(--accent);
+
+    text-decoration: none;
+
+}
+
+.message-content a:hover {
+
+    text-decoration: underline;
+
+}
 
 
 /* =========================
-   Code Blocks
+   Code
 ========================= */
-
 
 .message pre {
 
+    background: #0b1220;
 
-    background:
+    color: #f8fafc;
 
-        #0b1120;
+    border-radius: 14px;
 
+    padding: 16px;
 
-    color:
+    overflow-x: auto;
 
-        #e5e7eb;
-
-
-    padding:
-
-        16px;
-
-
-    border-radius:
-
-        14px;
-
-
-    overflow-x:
-
-        auto;
-
-
-    margin:
-
-        14px 0;
-
-
-    border:
-
-        1px solid #334155;
+    margin: 14px 0;
 
 }
-
-
-
-
 
 .message pre code {
 
+    background: none;
 
-    background:
+    padding: 0;
 
-        transparent;
+    color: inherit;
 
+    font-family: "Fira Code", monospace;
 
-    padding:
-
-        0;
-
-
-    font-family:
-
-        "Fira Code",
-        monospace;
-
-
-    font-size:
-
-        14px;
-
+    font-size: 14px;
 
 }
-
-
-
-
 
 .message code {
 
+    background: rgba(148, 163, 184, .18);
 
-    background:
+    padding: 2px 6px;
 
-        rgba(148, 163, 184, .2);
+    border-radius: 6px;
 
-
-    padding:
-
-        3px 6px;
-
-
-    border-radius:
-
-        6px;
-
-
-    font-family:
-
-        "Fira Code",
-        monospace;
-
+    font-family: "Fira Code", monospace;
 
 }
-
-
-
-
-
-/* =========================
-   Chat Images
-========================= */
-
-
-.chat-image {
-
-
-    max-width:
-
-        260px;
-
-
-    max-height:
-
-        260px;
-
-
-    width:
-
-        auto;
-
-
-    height:
-
-        auto;
-
-
-    display:
-
-        block;
-
-
-    border-radius:
-
-        16px;
-
-
-    object-fit:
-
-        contain;
-
-
-}
-
-
-
 
 
 /* =========================
    Tables
 ========================= */
 
-
 .message-content table {
 
+    width: 100%;
 
-    border-collapse:
+    border-collapse: collapse;
 
-        collapse;
+    display: block;
 
+    overflow-x: auto;
 
-    width:
-
-        100%;
-
-
-    display:
-
-        block;
-
-
-    overflow-x:
-
-        auto;
-
-
-    margin:
-
-        15px 0;
-
+    margin: 16px 0;
 
 }
-
-
-
-
 
 .message-content th,
 .message-content td {
 
+    border: 1px solid var(--border);
 
-    border:
+    padding: 8px 12px;
 
-        1px solid var(--border-color);
+}
 
+.message-content th {
 
-    padding:
-
-        8px 12px;
-
-
-    text-align:
-
-        left;
-
+    background: rgba(59, 130, 246, .12);
 
 }
 
 
+/* =========================
+   Images
+========================= */
+
+.chat-image {
+
+    display: block;
+
+    max-width: 320px;
+
+    width: 100%;
+
+    height: auto;
+
+    border-radius: 16px;
+
+    object-fit: contain;
+
+}
 
 
+/* =========================
+   Copy Button
+========================= */
 
-.message-content th {
+.copy-btn {
+
+    width: 34px;
+
+    height: 34px;
+
+    border: none;
+
+    border-radius: 10px;
+
+    background: rgba(255, 255, 255, .08);
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    cursor: pointer;
+
+    transition: .2s;
+
+}
+
+.copy-btn:hover {
+
+    transform: scale(1.05);
+
+}
+
+.copy-icon {
+
+    width: 18px;
+
+    height: 18px;
+
+}
 
 
-    background:
+/* =========================
+   Selection
+========================= */
 
-        rgba(59, 130, 246, .15);
+::selection {
 
+    background: var(--accent);
+
+    color: white;
 
 }
 
@@ -834,7 +671,7 @@ main::-webkit-scrollbar-thumb {
    Cadence AI
    Style.css
    Part 3
-   Footer + Buttons + Attachment
+   Footer + Buttons + Attachment Menu
 ======================================= */
 
 
@@ -842,279 +679,224 @@ main::-webkit-scrollbar-thumb {
    Footer
 ========================= */
 
-
 footer {
 
-    padding: 18px 22px;
+    flex-shrink: 0;
 
     display: flex;
 
-    align-items: center;
+    align-items: flex-end;
 
-    gap: 12px;
+    gap: 10px;
 
-
-    backdrop-filter:
-
-        blur(25px);
-
-
-    border-top:
-
-        1px solid var(--border-color);
-
+    padding: 14px 18px;
 
     position: relative;
 
-}
+    background: rgba(255, 255, 255, .04);
 
+    backdrop-filter: blur(18px);
 
-
-
-
-/* =========================
-   Text Input
-========================= */
-
-
-textarea {
-
-
-    flex: 1;
-
-
-    resize: none;
-
-
-    height: 56px;
-
-
-    padding: 16px;
-
-
-    border-radius: 18px;
-
-
-    outline: none;
-
-
-    font-size: 16px;
-
-
-    color:
-
-        var(--text-color);
-
-
-    background:
-
-        var(--card-color);
-
-
-    border:
-
-        1px solid var(--border-color);
-
-
+    border-top: 1px solid var(--border);
 
 }
-
-
-
-textarea::placeholder {
-
-
-    color:
-
-        var(--secondary-text);
-
-
-}
-
-
-
-
-
-/* =========================
-   Buttons
-========================= */
-
-
-button {
-
-
-    width: 56px;
-
-
-    height: 56px;
-
-
-    border-radius: 18px;
-
-
-    border:
-
-        1px solid var(--border-color);
-
-
-    background:
-
-        var(--card-color);
-
-
-    color:
-
-        var(--text-color);
-
-
-    cursor: pointer;
-
-
-    display:
-
-        flex;
-
-
-    align-items:
-
-        center;
-
-
-    justify-content:
-
-        center;
-
-
-    transition:
-
-        .25s;
-
-}
-
-
-
-
-
-button:hover {
-
-
-    transform:
-
-        translateY(-3px);
-
-
-}
-
-
-
-
-
-/* =========================
-   Footer Icons
-========================= */
-
-
-.footer-icon {
-
-
-    width: 26px;
-
-
-    height: 26px;
-
-
-    object-fit:
-
-        contain;
-
-
-}
-
-
-
-
-
-/* =========================
-   Send Button
-========================= */
-
-
-#send {
-
-
-    background:
-
-        linear-gradient(135deg,
-            #3b82f6,
-            #6366f1);
-
-
-    border:
-
-        none;
-
-
-}
-
-
-
-
-
-#send .footer-icon {
-
-
-    filter:
-
-        brightness(0) invert(1);
-
-
-}
-
-
-
 
 
 /* =========================
    Attachment Wrapper
 ========================= */
 
-
 .attachment-wrapper {
 
     position: relative;
 
-    z-index: 20;
+    flex-shrink: 0;
 
 }
+
+
+/* =========================
+   Attachment Button
+========================= */
 
 #attach {
 
-    position: relative;
+    width: 52px;
 
-    z-index: 21;
+    height: 52px;
 
-    touch-action: manipulation;
+    border: none;
+
+    border-radius: 16px;
+
+    background: var(--surface);
+
+    cursor: pointer;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    transition: .25s;
+
+}
+
+#attach:hover {
+
+    transform: translateY(-2px);
 
 }
 
 
+/* =========================
+   Voice Button
+========================= */
 
+#voice {
+
+    width: 52px;
+
+    height: 52px;
+
+    border: none;
+
+    border-radius: 16px;
+
+    background: var(--surface);
+
+    cursor: pointer;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    transition: .25s;
+
+}
+
+#voice:hover {
+
+    transform: translateY(-2px);
+
+}
+
+
+/* =========================
+   Send Button
+========================= */
+
+#send {
+
+    width: 52px;
+
+    height: 52px;
+
+    border: none;
+
+    border-radius: 16px;
+
+    cursor: pointer;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background: linear-gradient(135deg,
+            var(--accent),
+            var(--accent2));
+
+    transition: .25s;
+
+}
+
+#send:hover {
+
+    transform: translateY(-2px);
+
+}
+
+
+/* =========================
+   Footer Icons
+========================= */
+
+.footer-icon {
+
+    width: 22px;
+
+    height: 22px;
+
+    object-fit: contain;
+
+}
+
+#send .footer-icon {
+
+    filter: brightness(0) invert(1);
+
+}
+
+
+/* =========================
+   Prompt
+========================= */
+
+textarea {
+
+    flex: 1;
+
+    min-width: 0;
+
+    min-height: 52px;
+
+    max-height: 180px;
+
+    resize: none;
+
+    padding: 14px 16px;
+
+    border-radius: 18px;
+
+    border: 1px solid var(--border);
+
+    outline: none;
+
+    background: var(--surface);
+
+    color: var(--text);
+
+    font-size: 15px;
+
+    line-height: 1.5;
+
+}
+
+textarea::placeholder {
+
+    color: var(--text-light);
+
+}
 
 
 /* =========================
    Attachment Popup
 ========================= */
 
-
 .attach-menu {
 
     position: absolute;
 
-    bottom: 70px;
+    bottom: calc(100% + 10px);
 
     left: 50%;
 
-    transform: translateX(-50%) translateY(15px) scale(.9);
+    transform: translateX(-50%) scale(.95);
 
     display: flex;
 
@@ -1122,229 +904,173 @@ button:hover {
 
     gap: 10px;
 
-    padding: 12px;
+    padding: 10px;
 
     border-radius: 18px;
 
-    background: var(--card-color);
+    background: var(--surface);
 
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border);
 
-    box-shadow:
-        0 15px 40px rgba(0, 0, 0, .25);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, .28);
 
     opacity: 0;
 
+    visibility: hidden;
+
     pointer-events: none;
 
-    transition: .25s ease;
+    transition: .25s;
+
+    z-index: 9999;
 
 }
-
-
-
-
 
 .attach-menu.show {
 
     opacity: 1;
 
+    visibility: visible;
+
     pointer-events: auto;
 
-    transform:
-        translateX(-50%) translateY(0) scale(1);
+    transform: translateX(-50%) scale(1);
 
 }
-
-
-
-
 
 .attach-menu button {
 
+    width: 46px;
 
-    width:
+    height: 46px;
 
-        45px;
+    border: none;
 
+    border-radius: 14px;
 
-    height:
+    background: var(--surface-2);
 
-        45px;
+    display: flex;
 
+    align-items: center;
 
-    border-radius:
-
-        14px;
-
+    justify-content: center;
 
 }
 
+.attach-menu button:hover {
 
+    background: var(--accent);
 
+}
 
+.attach-menu button:hover img {
+
+    filter: brightness(0) invert(1);
+
+}
 
 .menu-icon {
 
+    width: 22px;
 
-    width:
-
-        25px;
-
-
-    height:
-
-        25px;
-
+    height: 22px;
 
 }
-
-
-
 
 
 /* =========================
    Image Preview
 ========================= */
 
-
 #imagePreview {
 
+    position: absolute;
 
-    position:
+    left: 80px;
 
-        absolute;
+    bottom: 72px;
 
+    display: flex;
 
+    gap: 8px;
 
-    bottom:
-
-        75px;
-
-
-
-    left:
-
-        20px;
-
-
-
-    display:
-
-        flex;
-
-
-
-    gap:
-
-        10px;
-
-
-
-    padding:
-
-        8px;
-
+    z-index: 100;
 
 }
-
-
-
-
 
 #imagePreview img {
 
+    width: 82px;
 
-    width:
+    height: 82px;
 
-        90px;
+    object-fit: cover;
 
+    border-radius: 14px;
 
-    height:
-
-        90px;
-
-
-
-    object-fit:
-
-        cover;
-
-
-
-    border-radius:
-
-        16px;
-
+    border: 1px solid var(--border);
 
 }
-
-
-
 
 
 /* =========================
-   Copy Button
+   Mobile
 ========================= */
 
+@media (max-width:480px) {
 
-.copy-btn {
+    footer {
 
+        padding: 10px;
 
-    margin-top:
+        gap: 8px;
 
-        14px;
+    }
 
+    #attach,
+    #voice,
+    #send {
 
+        width: 46px;
 
-    width:
+        height: 46px;
 
-        34px;
+        border-radius: 14px;
 
+    }
 
+    textarea {
 
-    height:
+        min-height: 46px;
 
-        34px;
+        font-size: 14px;
 
+        padding: 12px;
 
+    }
 
-    border-radius:
+    .attach-menu {
 
-        10px;
+        bottom: calc(100% + 8px);
 
+    }
 
+    #imagePreview {
 
-    padding:
+        left: 60px;
 
-        0;
+        bottom: 64px;
 
+    }
 
-}
+    #imagePreview img {
 
+        width: 70px;
 
+        height: 70px;
 
-
-
-.copy-icon {
-
-
-    width:
-
-        18px;
-
-
-
-    height:
-
-        18px;
-
-
-
-    object-fit:
-
-        contain;
-
+    }
 
 }
 
@@ -1360,747 +1086,326 @@ button:hover {
    Typing Animation
 ========================= */
 
-
 .typing {
 
     display: flex;
-
+    align-items: center;
     gap: 6px;
 
-    align-items: center;
-
-    height: 20px;
+    min-height: 18px;
 
 }
-
-
 
 .typing span {
 
     width: 8px;
-
     height: 8px;
 
+    border-radius: 50%;
 
-    background:
+    background: #94a3b8;
 
-        #94a3b8;
-
-
-    border-radius:
-
-        50%;
-
-
-    animation:
-
-        bounce 1.2s infinite;
+    animation: bounce 1.2s infinite;
 
 }
-
-
 
 .typing span:nth-child(2) {
 
-    animation-delay:
-
-        .2s;
+    animation-delay: .2s;
 
 }
-
-
 
 .typing span:nth-child(3) {
 
-    animation-delay:
-
-        .4s;
+    animation-delay: .4s;
 
 }
 
-
-
-
-
 @keyframes bounce {
-
 
     0%,
     60%,
     100% {
 
-        transform:
-
-            translateY(0);
-
-
-        opacity:
-
-            .5;
+        transform: translateY(0);
+        opacity: .4;
 
     }
-
-
 
     30% {
 
-        transform:
-
-            translateY(-8px);
-
-
-        opacity:
-
-            1;
+        transform: translateY(-8px);
+        opacity: 1;
 
     }
 
 }
-
-
-
 
 
 /* =========================
-   Welcome Popup
+   Welcome Screen
 ========================= */
-
 
 .welcome-overlay {
 
+    position: fixed;
 
-    position:
+    inset: 0;
 
-        fixed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
+    background: rgba(0, 0, 0, .55);
 
-    inset:
+    backdrop-filter: blur(14px);
 
-        0;
-
-
-    background:
-
-        rgba(0, 0, 0, .55);
-
-
-    backdrop-filter:
-
-        blur(12px);
-
-
-    display:
-
-        flex;
-
-
-    justify-content:
-
-        center;
-
-
-    align-items:
-
-        center;
-
-
-    z-index:
-
-        100;
-
+    z-index: 999;
 
 }
-
-
-
-
 
 .welcome-box {
 
+    width: min(420px, 92vw);
 
-    width:
+    padding: 34px;
 
-        380px;
+    border-radius: 24px;
 
+    text-align: center;
 
+    background: rgba(255, 255, 255, .08);
 
-    padding:
+    backdrop-filter: blur(22px);
 
-        35px;
+    border: 1px solid rgba(255, 255, 255, .12);
 
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .35);
 
-
-    text-align:
-
-        center;
-
-
-
-    border-radius:
-
-        25px;
-
-
-
-    background:
-
-        rgba(255, 255, 255, .08);
-
-
-
-    backdrop-filter:
-
-        blur(25px);
-
-
-
-    border:
-
-        1px solid rgba(255, 255, 255, .15);
-
-
-
-    box-shadow:
-
-        0 20px 60px rgba(0, 0, 0, .5);
-
-
-
-    animation:
-
-        popup .4s ease;
-
+    animation: popup .35s ease;
 
 }
-
-
-
-
 
 @keyframes popup {
 
-
     from {
 
-        opacity:
-
-            0;
-
-
-        transform:
-
-            scale(.8);
+        opacity: 0;
+        transform: scale(.9);
 
     }
-
-
 
     to {
 
-        opacity:
-
-            1;
-
-
-        transform:
-
-            scale(1);
+        opacity: 1;
+        transform: scale(1);
 
     }
 
 }
 
-
-
-
-
 .welcome-icon img {
 
+    width: 100px;
+    height: 100px;
 
-    border-radius:
-
-        50%;
-
+    border-radius: 50%;
 
 }
-
-
-
-
 
 .welcome-box h2 {
 
+    margin-top: 18px;
 
-    margin-top:
+    font-size: 28px;
 
-        15px;
-
-
-    font-size:
-
-        28px;
-
-
-    color:
-
-        white;
-
+    color: white;
 
 }
-
-
-
-
 
 .welcome-box p {
 
+    margin: 18px 0 24px;
 
-    color:
+    color: #d1d5db;
 
-        #cbd5e1;
-
-
-    margin:
-
-        20px 0;
-
+    line-height: 1.6;
 
 }
-
-
-
-
 
 .welcome-box button {
 
+    width: 100%;
+    height: 52px;
 
-    width:
+    border: none;
 
-        100%;
+    border-radius: 16px;
 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 
-    background:
+    cursor: pointer;
 
+    color: white;
 
-        linear-gradient(135deg,
-            #3b82f6,
-            #8b5cf6);
+    font-size: 15px;
+    font-weight: 600;
 
-
-
-    color:
-
-        white;
-
-
-
-    border:
-
-        none;
-
-
-
-    font-weight:
-
-        600;
-
+    background: linear-gradient(135deg,
+            var(--accent),
+            var(--accent2));
 
 }
-
-
-
 
 
 /* =========================
    Tablet
 ========================= */
 
-
-@media(max-width:700px) {
-
+@media (max-width:768px) {
 
     header {
 
+        padding: 14px 18px;
 
-        padding:
-
-            15px 20px;
-
+        gap: 14px;
 
     }
 
+    .brand h1 {
 
-
-    .message {
-
-
-        max-width:
-
-            90%;
-
+        font-size: 19px;
 
     }
 
+    .brand p {
 
+        font-size: 13px;
+
+    }
 
     main {
 
-
-        padding:
-
-            20px;
-
+        padding: 20px;
 
     }
 
+    .message {
+
+        max-width: 88%;
+
+    }
 
 }
-
-
-
 
 
 /* =========================
    Mobile
 ========================= */
 
-
-@media(max-width:480px) {
-
-
+@media (max-width:480px) {
 
     html,
     body {
 
-        overflow:
-
-            hidden;
+        height: 100%;
+        overflow: hidden;
 
     }
-
-
-
 
     .app {
 
-
-        height:
-
-            100dvh;
-
+        height: 100dvh;
 
     }
-
-    main#chat {
-
-        flex: 1;
-
-        min-height: 0;
-
-        overflow-y: auto;
-
-    }
-
-
-
 
     header {
 
+        height: 64px;
 
-        height:
+        padding: 10px 12px;
 
-            60px;
-
-
-        padding:
-
-            10px 12px;
-
-
-        gap:
-
-            10px;
-
+        gap: 10px;
 
     }
-
-
-
-
 
     .profile {
 
-
-        width:
-
-            36px;
-
-
-        height:
-
-            36px;
-
+        width: 40px;
+        height: 40px;
 
     }
-
-
-
-
 
     .brand h1 {
 
-
-        font-size:
-
-            17px;
-
+        font-size: 17px;
 
     }
 
+    .brand p {
 
+        font-size: 12px;
 
-
+    }
 
     #themeToggle {
 
+        width: 40px;
+        height: 40px;
 
-        width:
-
-            38px;
-
-
-        height:
-
-            38px;
-
-
-        font-size:
-
-            16px;
-
+        font-size: 17px;
 
     }
-
-
-
-
 
     main {
 
+        padding: 14px;
 
-        padding:
-
-            15px;
-
-
-        gap:
-
-            12px;
-
+        gap: 14px;
 
     }
-
-
-
-
-
-    /* FIXED MOBILE MESSAGE SIZE */
-
 
     .message {
 
+        max-width: 94%;
 
-        max-width:
+        padding: 14px;
 
-            95%;
+        font-size: 14px;
 
-
-        width:
-
-            auto;
-
-
-        padding:
-
-            14px 16px;
-
-
-        font-size:
-
-            14px;
-
-
-        line-height:
-
-            1.6;
-
-
-        overflow: visible;
+        line-height: 1.65;
 
     }
-
-
-
-
-
-    .message-content {
-
-
-        width:
-
-            100%;
-
-
-        max-width:
-
-            100%;
-
-
-        overflow-wrap:
-
-            anywhere;
-
-
-    }
-
-
-
-
 
     .chat-image {
 
+        max-width: 100%;
 
-        max-width:
-
-            100%;
-
-
-        height:
-
-            auto;
-
+        height: auto;
 
     }
-
-
-
-
-
-    footer {
-
-
-        padding:
-
-            8px;
-
-
-        gap:
-
-            6px;
-
-
-    }
-
-
-
-
-
-    footer button {
-
-
-        width:
-
-            42px;
-
-
-        height:
-
-            42px;
-
-
-        border-radius:
-
-            14px;
-
-
-    }
-
-
-
-
-
-    .footer-icon {
-
-
-        width:
-
-            22px;
-
-
-        height:
-
-            22px;
-
-
-    }
-
-
-
-
-
-    textarea {
-
-
-        height:
-
-            42px;
-
-
-        padding:
-
-            10px;
-
-
-        font-size:
-
-            14px;
-
-
-    }
-
-
-
-
-
-    .attach-menu {
-
-
-        bottom:
-
-            55px;
-
-
-    }
-
-
-
-
 
     .welcome-box {
 
-
-        width:
-
-            90%;
-
-
-        padding:
-
-            25px;
-
+        padding: 26px;
 
     }
 
+    .welcome-icon img {
+
+        width: 80px;
+        height: 80px;
+
+    }
+
+    .welcome-box h2 {
+
+        font-size: 24px;
+
+    }
 
 }
 
@@ -2108,14 +1413,54 @@ button:hover {
    Cadence AI
    Style.css
    Part 5
-   Final Fixes + Stability
+   Final Polish + Stability
 ======================================= */
 
 
 /* =========================
-   Overflow Protection
+   Global Safety
 ========================= */
 
+img {
+
+    max-width: 100%;
+
+    display: block;
+
+}
+
+button {
+
+    outline: none;
+
+    -webkit-tap-highlight-color: transparent;
+
+}
+
+textarea {
+
+    -webkit-tap-highlight-color: transparent;
+
+}
+
+textarea:focus {
+
+    border-color: var(--accent);
+
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, .15);
+
+}
+
+button:active {
+
+    transform: scale(.96);
+
+}
+
+
+/* =========================
+   Chat Stability
+========================= */
 
 .message,
 .message-content {
@@ -2124,177 +1469,184 @@ button:hover {
 
 }
 
+.message-content img {
 
+    border-radius: 14px;
 
-pre,
-code {
+}
 
-    max-width: 100%;
+.message-content pre {
 
     overflow-x: auto;
 
 }
 
+.message-content code {
 
+    word-break: break-word;
 
-
-
-/* =========================
-   Mobile Image Safety
-========================= */
-
+}
 
 .chat-image {
 
-    display:
+    max-width: 320px;
 
-        block;
+    width: 100%;
 
+    height: auto;
 
-    max-width:
-
-        100%;
-
-
-    height:
-
-        auto;
-
-
-    object-fit:
-
-        contain;
-
+    border-radius: 16px;
 
 }
 
 
-
-
-
 /* =========================
-   Mobile Footer Protection
+   Image Preview
 ========================= */
 
+.preview-image {
 
-@media(max-width:480px) {
+    width: 82px;
 
+    height: 82px;
 
-    footer {
+    object-fit: cover;
 
-
-        width:
-
-            100%;
-
-
-        overflow:
-
-            hidden;
-
-
-    }
-
-
-
-    footer textarea {
-
-
-        min-width:
-
-            0;
-
-
-    }
-
-
-
-    #send,
-    #voice,
-    #attach {
-
-
-        flex-shrink:
-
-            0;
-
-
-    }
-
-
+    border-radius: 14px;
 
 }
 
 
-
-
-
 /* =========================
-   Smooth Chat Experience
+   Smooth Animations
 ========================= */
 
+button,
+textarea,
+.message,
+.attach-menu {
 
-main {
-
-    scroll-behavior:
-
-        smooth;
+    transition:
+        background .25s,
+        color .25s,
+        border-color .25s,
+        transform .25s,
+        opacity .25s;
 
 }
 
 
-
-
-
 /* =========================
-   Selection
+   Firefox Scrollbar
 ========================= */
-
-
-::selection {
-
-
-    background:
-
-        #3b82f6;
-
-
-    color:
-
-        white;
-
-
-}
-
-
-
-
-
-/* =========================
-   Scrollbar (Firefox)
-========================= */
-
 
 * {
 
+    scrollbar-width: thin;
 
-    scrollbar-width:
-
-        thin;
-
-
-    scrollbar-color:
-
-        #475569 transparent;
-
+    scrollbar-color: #586274 transparent;
 
 }
 
 
+/* =========================
+   Chrome Scrollbar
+========================= */
 
+::-webkit-scrollbar {
+
+    width: 8px;
+
+    height: 8px;
+
+}
+
+::-webkit-scrollbar-thumb {
+
+    background: #586274;
+
+    border-radius: 50px;
+
+}
+
+::-webkit-scrollbar-track {
+
+    background: transparent;
+
+}
+
+
+/* =========================
+   Text Selection
+========================= */
+
+::selection {
+
+    background: var(--accent);
+
+    color: white;
+
+}
+
+
+/* =========================
+   Mobile Polish
+========================= */
+
+@media (max-width:480px) {
+
+    footer {
+
+        padding-bottom: max(10px, env(safe-area-inset-bottom));
+
+    }
+
+    .attach-menu {
+
+        z-index: 99999;
+
+    }
+
+    #imagePreview {
+
+        z-index: 9999;
+
+    }
+
+    .copy-btn {
+
+        width: 32px;
+
+        height: 32px;
+
+    }
+
+    .copy-icon {
+
+        width: 16px;
+
+        height: 16px;
+
+    }
+
+}
+
+
+/* =========================
+   Desktop Polish
+========================= */
+
+@media (min-width:1024px) {
+
+    .message {
+
+        max-width: 700px;
+
+    }
+
+}
 
 
 /* =========================
    End
 ========================= */
-/* Mobile attachment button fix */
