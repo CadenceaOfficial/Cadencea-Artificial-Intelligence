@@ -2364,19 +2364,3 @@ main {
    End
 ========================= */
 /* Mobile attachment button fix */
-
-.attachment-wrapper {
-    position: relative;
-    z-index: 100;
-}
-
-#attach {
-    position: relative;
-    z-index: 101;
-    pointer-events: auto;
-    touch-action: manipulation;
-}
-
-#attach img {
-    pointer-events: none;
-}

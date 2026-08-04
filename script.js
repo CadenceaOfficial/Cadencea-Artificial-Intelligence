@@ -368,21 +368,12 @@ if (attachBtn && attachMenu) {
 
     attachBtn.addEventListener("click", (e) => {
 
-        alert("PLUS CLICKED");
-
         e.preventDefault();
         e.stopPropagation();
 
         attachMenu.classList.toggle("show");
 
     });
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    attachMenu.classList.toggle("show");
-
-});
 
 }
 
