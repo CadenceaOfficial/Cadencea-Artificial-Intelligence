@@ -172,7 +172,13 @@ function addMessage(text, type) {
 
     chat.appendChild(message);
 
-    chat.scrollTop = chat.scrollHeight;
+    chat.scrollTo({
+
+        top: chat.scrollHeight,
+
+        behavior: "smooth"
+
+    });
 
     return message;
 
@@ -812,7 +818,10 @@ async function sendMessage() {
         }
 
         chat.appendChild(message);
-        chat.scrollTop = chat.scrollHeight;
+        chat.scrollTo({
+            top: chat.scrollHeight,
+            behavior: "smooth"
+        });
 
         await saveMessage(
             text || "[Image]",
