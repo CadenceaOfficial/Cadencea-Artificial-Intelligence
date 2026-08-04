@@ -274,9 +274,11 @@ async function typeMessage(message, text) {
 
 if (attachBtn && imageUpload) {
 
+    const attachMenu = document.getElementById("attachMenu");
+
     attachBtn.addEventListener("click", () => {
 
-        imageUpload.click();
+        attachMenu.classList.toggle("show");
 
     });
 
