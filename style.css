@@ -1081,11 +1081,19 @@ button:hover {
 
 .attachment-wrapper {
 
+    position: relative;
 
-    position:
+    z-index: 20;
 
-        relative;
+}
 
+#attach {
+
+    position: relative;
+
+    z-index: 21;
+
+    touch-action: manipulation;
 
 }
 

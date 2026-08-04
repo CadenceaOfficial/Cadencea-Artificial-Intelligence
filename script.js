@@ -362,17 +362,21 @@ async function typeMessage(message, text) {
 // =======================================
 
 
-if (attachBtn && imageUpload) {
+const attachMenu = document.getElementById("attachMenu");
 
-    const attachMenu = document.getElementById("attachMenu");
+if (attachBtn && attachMenu) {
 
-    attachBtn.addEventListener("click", () => {
+    attachBtn.addEventListener("click", (e) => {
+
+        e.preventDefault();
+        e.stopPropagation();
 
         attachMenu.classList.toggle("show");
 
     });
 
 }
+
 const attachMenu = document.getElementById("attachMenu");
 
 const pickImage = document.getElementById("pickImage");
