@@ -8,7 +8,7 @@ const greetings = [
     "Hello! Buddy",
     "Welcome My Hero",
     "Wanna know something? Just type",
-    "Breakup? No worries, i'm here for you",
+    "Breakup? I'm here for you",
     "Let's create something!",
     "What are we building today?",
     "You are great",
