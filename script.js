@@ -592,7 +592,7 @@ async function aiReply(userPrompt, image) {
         // -----------------------------
         // Backend Request
         // -----------------------------
-
+        console.log("Sending image:", selectedImage ? "YES" : "NO");
         const response = await fetch(
 
             "https://cadence-ai-backend.cadenceaofficial-ai.workers.dev",
