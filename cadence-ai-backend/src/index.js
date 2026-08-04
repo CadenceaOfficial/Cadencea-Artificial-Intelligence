@@ -46,6 +46,11 @@ export default {
         history,
         image
       } = await request.json();
+      console.log("Image received:", image ? "YES" : "NO");
+
+      if (image) {
+        console.log(image.substring(0, 80));
+      }
 
 
       console.log(
