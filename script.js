@@ -611,10 +611,9 @@ async function aiReply(userPrompt, image) {
 
                     history: recentHistory,
 
-                    image: selectedImage
+                    image: imageToSend
 
                 })
-
             }
 
         );
@@ -741,6 +740,7 @@ async function aiReply(userPrompt, image) {
         // -----------------------------
         // Reset Image
         // -----------------------------
+        selectedImage = null
 
         imageUpload.value = "";
 
