@@ -72,14 +72,90 @@ const themeToggle = document.getElementById("themeToggle");
 const imageUpload = document.getElementById("imageUpload");
 const imagePreview = document.getElementById("imagePreview");
 const attachBtn = document.getElementById("attach");
-
+const voiceBtn = document.getElementById("voice");
 
 
 let currentUserId = null;
 
 let selectedImage = null;
 
+// ===============================
+// Voice Input
+// ===============================
 
+if (voiceBtn) {
+
+    const SpeechRecognition =
+        window.SpeechRecognition ||
+        window.webkitSpeechRecognition;
+
+
+    if (SpeechRecognition) {
+
+        const recognition = new SpeechRecognition();
+
+
+        recognition.continuous = false;
+
+        recognition.lang = "en-US";
+
+        recognition.interimResults = false;
+
+
+
+        voiceBtn.addEventListener("click", () => {
+
+            recognition.start();
+
+            voiceBtn.style.transform = "scale(1.1)";
+
+        });
+
+
+
+        recognition.onresult = (event) => {
+
+            const speechText =
+                event.results[0][0].transcript;
+
+
+            input.value += speechText;
+
+        };
+
+
+
+        recognition.onend = () => {
+
+            voiceBtn.style.transform = "scale(1)";
+
+        };
+
+
+
+        recognition.onerror = (event) => {
+
+            console.error(
+                "Voice error:",
+                event.error
+            );
+
+        };
+
+
+    }
+
+    else {
+
+        voiceBtn.style.display = "none";
+
+        console.log(
+            "Speech recognition not supported"
+        );
+
+    }
+
+}
 // =======================================
 // Markdown + Math
 // =======================================
@@ -1231,75 +1307,6 @@ send.addEventListener(
     sendMessage
 
 );
-
-
-// ===============================
-// Voice Input
-// ===============================
-
-if (voiceBtn) {
-
-    const SpeechRecognition =
-        window.SpeechRecognition ||
-        window.webkitSpeechRecognition;
-
-
-    if (SpeechRecognition) {
-
-        const recognition = new SpeechRecognition();
-
-
-        recognition.continuous = false;
-
-        recognition.lang = "en-US";
-
-        recognition.interimResults = false;
-
-
-
-        voiceBtn.addEventListener("click", () => {
-
-            recognition.start();
-
-            voiceBtn.style.transform = "scale(1.1)";
-
-        });
-
-
-
-        recognition.onresult = (event) => {
-
-            const speechText =
-                event.results[0][0].transcript;
-
-
-            input.value += speechText;
-
-
-        };
-
-
-
-        recognition.onend = () => {
-
-            voiceBtn.style.transform = "scale(1)";
-
-        };
-
-
-    }
-
-    else {
-
-        voiceBtn.style.display = "none";
-
-        console.log(
-            "Speech recognition not supported"
-        );
-
-    }
-
-}
 
 
 
