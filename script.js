@@ -776,6 +776,7 @@ async function aiReply(userPrompt, image) {
 async function sendMessage() {
 
     const text = input.value.trim();
+    const imageToSend = selectedImage;
 
     // Don't send if both text and image are empty
     if (!text && !selectedImage) return;
