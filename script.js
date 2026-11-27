@@ -12,18 +12,16 @@ import {
 
 import {
     onAuthStateChanged,
-    signInWithPopup
+    signInWithPopup,
+    signOut
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 
 import {
     collection,
-    addDoc,
     doc,
     setDoc,
     serverTimestamp,
-    getDocs,
-    query,
-    orderBy
+    getDocs
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
 
@@ -31,8 +29,11 @@ import {
 // CONFIGURATION
 // =======================================
 
-const BACKEND_URL =
-    "https://cadence-ai-backend.cadenceaofficial-ai.workers.dev";
+const USE_LOCAL_BACKEND = new URLSearchParams(window.location.search)
+    .get("backend") === "local";
+const BACKEND_URL = USE_LOCAL_BACKEND
+    ? "http://127.0.0.1:8787"
+    : "https://cadence-ai-backend.cadenceaofficial-ai.workers.dev";
 
 
 // =======================================
@@ -72,6 +73,19 @@ const welcome = document.getElementById("welcome");
 const chat = document.getElementById("chat");
 const input = document.getElementById("prompt");
 const send = document.getElementById("send");
+const stopResponseButton = document.getElementById("stopResponse");
+const sidebar = document.getElementById("sidebar");
+const sidebarToggle = document.getElementById("sidebarToggle");
+const sidebarAvatar = document.getElementById("sidebarAvatar");
+const sidebarAvatarFallback = document.getElementById("sidebarAvatarFallback");
+const sidebarUserName = document.getElementById("sidebarUserName");
+const sidebarUserEmail = document.getElementById("sidebarUserEmail");
+const newChatButton = document.getElementById("newChatButton");
+const chatList = document.getElementById("chatList");
+const settingsButton = document.getElementById("settingsButton");
+const settingsPanel = document.getElementById("settingsPanel");
+const sidebarThemeToggle = document.getElementById("sidebarThemeToggle");
+const logoutButton = document.getElementById("logoutButton");
 
 const googleLogin = document.getElementById("googleLogin");
 const themeToggle = document.getElementById("themeToggle");
@@ -99,6 +113,43 @@ const documentUpload = document.getElementById("documentUpload");
 let currentUserId = null;
 let selectedImage = null;
 let isSending = false;
+let activeRequestController = null;
+let activeChatId = null;
+let chatSessions = [];
+const messagesByChatId = new Map();
+const MAX_PROMPT_LENGTH = 12_000;
+const LEGACY_CHAT_ID = "legacy";
+const CHAT_MESSAGE_MARKER = "--message--";
+
+function updateSidebarAccount(user) {
+    const displayName = user?.displayName || "Your account";
+    const photoUrl = user?.photoURL || "";
+
+    if (sidebarUserName) sidebarUserName.textContent = displayName;
+    if (sidebarUserEmail) sidebarUserEmail.textContent = user?.email || "Sign in to sync your chats";
+
+    if (sidebarAvatar) {
+        sidebarAvatar.src = photoUrl;
+        sidebarAvatar.hidden = !photoUrl;
+    }
+
+    if (sidebarAvatarFallback) {
+        sidebarAvatarFallback.textContent = displayName.trim().charAt(0).toUpperCase() || "U";
+        sidebarAvatarFallback.hidden = Boolean(photoUrl);
+    }
+}
+
+function closeSidebar() {
+    sidebar?.classList.remove("is-open");
+    sidebarToggle?.setAttribute("aria-expanded", "false");
+    sidebarToggle?.setAttribute("aria-label", "Open navigation");
+}
+
+function toggleSidebar() {
+    const isOpen = sidebar?.classList.toggle("is-open") || false;
+    sidebarToggle?.setAttribute("aria-expanded", String(isOpen));
+    sidebarToggle?.setAttribute("aria-label", isOpen ? "Close navigation" : "Open navigation");
+}
 
 
 // =======================================
@@ -111,7 +162,7 @@ function renderMarkdown(text) {
 
     wrapper.className = "message-content";
 
-    wrapper.innerHTML = marked.parse(text || "");
+    wrapper.innerHTML = safeMarkdownHtml(text);
 
     if (window.renderMathInElement) {
 
@@ -135,6 +186,27 @@ function renderMarkdown(text) {
     }
 
     return wrapper;
+}
+
+function safeMarkdownHtml(text) {
+
+    const source = String(text || "");
+
+    if (!window.marked?.parse) {
+        const escaped = document.createElement("span");
+        escaped.textContent = source;
+        return escaped.innerHTML.replace(/\n/g, "<br>");
+    }
+
+    const rendered = window.marked.parse(source);
+
+    if (window.DOMPurify) {
+        return window.DOMPurify.sanitize(rendered);
+    }
+
+    const escaped = document.createElement("span");
+    escaped.textContent = source;
+    return escaped.innerHTML.replace(/\n/g, "<br>");
 }
 
 
@@ -218,30 +290,14 @@ function addMessage(text, type) {
 
 
 // =======================================
-// TYPING ANIMATION
+// RENDER COMPLETE RESPONSE
 // =======================================
 
-async function typeMessage(message, text) {
+function typeMessage(message, text) {
 
     const content = message.querySelector(".message-content");
 
-    content.innerHTML = "";
-
-    let current = "";
-
-    for (const letter of text) {
-
-        current += letter;
-
-        content.innerHTML = marked.parse(current);
-
-        chat.scrollTop = chat.scrollHeight;
-
-        await new Promise(resolve =>
-            setTimeout(resolve, 8)
-        );
-
-    }
+    content.innerHTML = safeMarkdownHtml(text);
 
     if (window.renderMathInElement) {
 
@@ -264,6 +320,10 @@ async function typeMessage(message, text) {
 
     }
 
+    chat.scrollTop = chat.scrollHeight;
+
+    return text;
+
 }
 
 
@@ -271,97 +331,266 @@ async function typeMessage(message, text) {
 // FIREBASE: SAVE MESSAGE
 // =======================================
 
-async function saveMessage(text, sender) {
+function chatIdFromMessageDocId(docId) {
+    const markerIndex = docId.indexOf(CHAT_MESSAGE_MARKER);
 
-    if (!currentUserId || !text) return false;
+    return docId.startsWith("chat-") && markerIndex > 0
+        ? docId.slice(0, markerIndex)
+        : LEGACY_CHAT_ID;
+}
 
-    try {
+function timestampMillis(value) {
+    if (typeof value?.toMillis === "function") return value.toMillis();
+    if (value instanceof Date) return value.getTime();
+    if (typeof value === "number") return value;
+    if (Number.isFinite(value?.seconds)) return value.seconds * 1000;
+    return 0;
+}
 
-        await addDoc(
+function titleForChat(chatId, messages) {
+    const firstUserMessage = messages.find(message =>
+        message.sender === "user" && message.text && message.text !== "[Image]"
+    );
 
-            collection(
-                db,
-                "Users",
-                currentUserId,
-                "Chats"
-            ),
-
-            {
-                text: text,
-                sender: sender,
-                time: serverTimestamp()
-            }
-
-        );
-
-        console.log("Firebase: Message saved.");
-
-        return true;
-
-    } catch (error) {
-
-        console.error("Firebase Save Error:", error);
-
-        // IMPORTANT:
-        // Firebase failure must not stop AI communication.
-
-        return false;
-
+    if (!firstUserMessage) {
+        return chatId === LEGACY_CHAT_ID ? "Previous chat" : "New chat";
     }
 
+    const title = firstUserMessage.text.replace(/\s+/g, " ").trim();
+    return title.length > 38 ? `${title.slice(0, 37)}…` : title;
+}
+
+function refreshChatSessions() {
+    chatSessions = [...messagesByChatId.entries()]
+        .filter(([, messages]) => messages.length > 0)
+        .map(([id, messages]) => {
+            const orderedMessages = [...messages].sort(
+                (left, right) => timestampMillis(left.time) - timestampMillis(right.time)
+            );
+            const latestMessage = orderedMessages[orderedMessages.length - 1];
+
+            return {
+                id,
+                title: titleForChat(id, orderedMessages),
+                updatedAt: timestampMillis(latestMessage?.time),
+                messages: orderedMessages
+            };
+        })
+        .sort((left, right) => right.updatedAt - left.updatedAt);
+}
+
+function renderChatList() {
+    if (!chatList) return;
+
+    chatList.replaceChildren();
+
+    const sessions = [...chatSessions];
+    if (activeChatId && !sessions.some(session => session.id === activeChatId)) {
+        sessions.unshift({ id: activeChatId, title: "New chat", messages: [] });
+    }
+
+    sessions.forEach(session => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "chat-list-item";
+        button.classList.toggle("active", session.id === activeChatId);
+        button.disabled = isSending;
+        button.setAttribute("aria-current", session.id === activeChatId ? "page" : "false");
+
+        const title = document.createElement("span");
+        title.className = "chat-list-title";
+        title.textContent = session.title;
+        button.appendChild(title);
+
+        const preview = document.createElement("span");
+        preview.className = "chat-list-preview";
+        const latestMessage = session.messages[session.messages.length - 1];
+        preview.textContent = latestMessage?.text || "Start a conversation";
+        button.appendChild(preview);
+
+        button.addEventListener("click", () => {
+            openChat(session.id);
+            closeSidebar();
+        });
+
+        chatList.appendChild(button);
+    });
+
+    if (newChatButton) newChatButton.disabled = isSending;
+}
+
+function appendHistoryMessage(messageData) {
+    const message = document.createElement("div");
+    message.className = `message ${messageData.sender === "ai" ? "ai" : "user"}`;
+    message.appendChild(renderMarkdown(messageData.text));
+
+    if (messageData.sender === "ai") {
+        message.appendChild(createCopyButton(messageData.text));
+    }
+
+    chat.appendChild(message);
+}
+
+function openChat(chatId) {
+    if (!chatId || isSending) return;
+
+    activeChatId = chatId;
+    if (!messagesByChatId.has(chatId)) messagesByChatId.set(chatId, []);
+
+    chat.replaceChildren();
+    const messages = messagesByChatId.get(chatId) || [];
+
+    if (!messages.length) {
+        const emptyState = document.createElement("div");
+        emptyState.className = "empty-chat-state";
+
+        const heading = document.createElement("strong");
+        heading.textContent = "A clear page for a new idea.";
+        emptyState.appendChild(heading);
+
+        const copy = document.createElement("p");
+        copy.textContent = "Ask Cadence AI anything to get started.";
+        emptyState.appendChild(copy);
+
+        chat.appendChild(emptyState);
+    } else {
+        messages.slice(-200).forEach(appendHistoryMessage);
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+    renderChatList();
+}
+
+function startNewChat() {
+    if (isSending) return;
+
+    const chatId = `chat-${crypto.randomUUID()}`;
+    messagesByChatId.set(chatId, []);
+    openChat(chatId);
+    input?.focus();
+}
+
+function previousChatMemory(chatId) {
+    const activeIndex = chatSessions.findIndex(session => session.id === chatId);
+    const previousSession = activeIndex >= 0
+        ? chatSessions[activeIndex + 1]
+        : chatSessions[0];
+
+    if (!previousSession) return null;
+
+    const messages = previousSession.messages;
+    const selectedIndexes = new Set([
+        ...Array.from({ length: Math.min(4, messages.length) }, (_, index) => index),
+        ...Array.from(
+            { length: Math.min(6, messages.length) },
+            (_, index) => messages.length - Math.min(6, messages.length) + index
+        )
+    ]);
+
+    const excerpt = [...selectedIndexes]
+        .sort((left, right) => left - right)
+        .map(index => messages[index])
+        .filter(Boolean)
+        .map(message => {
+            const speaker = message.sender === "ai" ? "Cadence AI" : "User";
+            const compactText = message.text.replace(/\s+/g, " ").trim();
+            const text = compactText.length > 650
+                ? `${compactText.slice(0, 500)}… ${compactText.slice(-140)}`
+                : compactText;
+            return `${speaker}: ${text}`;
+        })
+        .join("\n");
+
+    if (!excerpt) return null;
+
+    return `Reference notes from the user's immediately previous chat, “${previousSession.title}”. These excerpts include its opening and recent messages:\n${excerpt}`;
+}
+
+async function saveMessage(text, sender, chatId = activeChatId) {
+    if (!currentUserId || !text || !chatId) return null;
+
+    try {
+        const messageId = `${chatId}${CHAT_MESSAGE_MARKER}${crypto.randomUUID()}`;
+        const messageRef = doc(
+            db,
+            "Users",
+            currentUserId,
+            "Chats",
+            messageId
+        );
+        const savedAt = Date.now();
+
+        await setDoc(messageRef, {
+            text,
+            sender,
+            time: serverTimestamp()
+        });
+
+        const messages = messagesByChatId.get(chatId) || [];
+        messages.push({ id: messageRef.id, text, sender, time: savedAt });
+        messagesByChatId.set(chatId, messages);
+        refreshChatSessions();
+        renderChatList();
+
+        console.log("Firebase: Message saved.");
+        return messageRef.id;
+    } catch (error) {
+        console.error("Firebase Save Error:", error);
+        return null;
+    }
 }
 
 
 // =======================================
-// FIREBASE: LOAD OLD CHATS
+// FIREBASE: LOAD CHAT SESSIONS
 // =======================================
 
 async function loadOldChats() {
-
     if (!currentUserId) return;
 
     try {
+        const chatsRef = collection(db, "Users", currentUserId, "Chats");
+        const snapshot = await getDocs(chatsRef);
+        messagesByChatId.clear();
 
-        chat.innerHTML = "";
-
-        const chatsRef = collection(
-            db,
-            "Users",
-            currentUserId,
-            "Chats"
-        );
-
-        const q = query(
-            chatsRef,
-            orderBy("time")
-        );
-
-        const snapshot = await getDocs(q);
-
-        snapshot.forEach(docSnap => {
-
+        snapshot.docs.forEach(docSnap => {
             const data = docSnap.data();
+            if (typeof data.text !== "string" || !["user", "ai"].includes(data.sender)) return;
 
-            addMessage(
-                data.text,
-                data.sender
-            );
-
+            const chatId = chatIdFromMessageDocId(docSnap.id);
+            const messages = messagesByChatId.get(chatId) || [];
+            messages.push({
+                id: docSnap.id,
+                text: data.text,
+                sender: data.sender,
+                time: data.time || 0
+            });
+            messagesByChatId.set(chatId, messages);
         });
 
-        console.log("Firebase: Chat history loaded.");
+        messagesByChatId.forEach(messages => {
+            messages.sort((left, right) => timestampMillis(left.time) - timestampMillis(right.time));
+        });
 
+        refreshChatSessions();
+
+        if (chatSessions.length) {
+            openChat(chatSessions[0].id);
+        } else {
+            startNewChat();
+        }
+
+        console.log("Firebase: Chat sessions loaded.");
     } catch (error) {
-
         console.error("Firebase Load Error:", error);
-
+        messagesByChatId.clear();
+        chatSessions = [];
+        startNewChat();
         addMessage(
             "I couldn't load your previous chats, but you can still start a new conversation.",
             "ai"
         );
-
     }
-
 }
 
 
@@ -383,6 +612,7 @@ if (googleLogin) {
             const user = result.user;
 
             currentUserId = user.uid;
+            updateSidebarAccount(user);
 
             const photo = document.getElementById("userPhoto");
 
@@ -392,28 +622,24 @@ if (googleLogin) {
 
             }
 
-            await setDoc(
-
-                doc(db, "Users", user.uid),
-
-                {
-                    name: user.displayName || "User",
-                    email: user.email || "",
-                    photo: user.photoURL || "",
-                    createdAt: serverTimestamp()
-                },
-
-                {
-                    merge: true
-                }
-
-            );
+            try {
+                await setDoc(
+                    doc(db, "Users", user.uid),
+                    {
+                        name: user.displayName || "User",
+                        email: user.email || "",
+                        photo: user.photoURL || "",
+                        lastSeenAt: serverTimestamp()
+                    },
+                    { merge: true }
+                );
+            } catch (profileError) {
+                console.error("Firebase Profile Save Error:", profileError);
+            }
 
             if (welcome) {
                 welcome.style.display = "none";
             }
-
-            await loadOldChats();
 
             console.log("Google Login Successful.");
 
@@ -441,7 +667,16 @@ onAuthStateChanged(auth, async (user) => {
 
     if (!user) {
 
+        activeRequestController?.abort();
         currentUserId = null;
+        activeChatId = null;
+        chatSessions = [];
+        messagesByChatId.clear();
+
+        if (chat) chat.replaceChildren();
+        updateSidebarAccount(null);
+        renderChatList();
+        closeSidebar();
 
         if (welcome) {
             welcome.style.display = "flex";
@@ -452,6 +687,7 @@ onAuthStateChanged(auth, async (user) => {
     }
 
     currentUserId = user.uid;
+    updateSidebarAccount(user);
 
     const photo = document.getElementById("userPhoto");
 
@@ -469,14 +705,59 @@ onAuthStateChanged(auth, async (user) => {
 
 });
 
+if (sidebarToggle) {
+    sidebarToggle.addEventListener("click", toggleSidebar);
+}
+
+if (newChatButton) {
+    newChatButton.addEventListener("click", () => {
+        startNewChat();
+        closeSidebar();
+    });
+}
+
+if (settingsButton && settingsPanel) {
+    settingsButton.addEventListener("click", () => {
+        settingsPanel.hidden = !settingsPanel.hidden;
+        settingsButton.setAttribute("aria-expanded", String(!settingsPanel.hidden));
+    });
+}
+
+if (logoutButton) {
+    logoutButton.addEventListener("click", async () => {
+        activeRequestController?.abort();
+        try {
+            await signOut(auth);
+        } catch (error) {
+            console.error("Sign out failed:", error);
+            addMessage("I couldn't log you out. Please try again.", "ai");
+        }
+    });
+}
+
+sidebar?.addEventListener("keydown", event => {
+    if (event.key === "Escape") closeSidebar();
+});
+
+document.addEventListener("click", event => {
+    if (sidebar && !sidebar.contains(event.target)) closeSidebar();
+});
+
 
 // =======================================
 // AI REPLY
 // =======================================
 
-async function aiReply(text, image) {
+async function aiReply(text, image, savedMessageId, signal, chatId) {
+
+    if (signal.aborted) {
+        addMessage("Response stopped.", "ai");
+        return;
+    }
 
     const typing = document.createElement("div");
+    let responseMessage = null;
+    let displayedReply = "";
 
     typing.className = "message ai";
 
@@ -498,68 +779,50 @@ async function aiReply(text, image) {
         // GET CHAT HISTORY
         // -----------------------------
 
-        let history = [];
+        const currentMessages = [...(messagesByChatId.get(chatId) || [])]
+            .sort((left, right) => timestampMillis(left.time) - timestampMillis(right.time));
+        const currentMessageWasSaved = Boolean(
+            savedMessageId && currentMessages.some(message => message.id === savedMessageId)
+        );
 
-        if (currentUserId) {
+        const currentHistory = currentMessages.slice(-12).map(message => {
+            const isCurrentPrompt = message.id === savedMessageId;
+            const maxLength = isCurrentPrompt ? MAX_PROMPT_LENGTH : 3_000;
+            const content = message.text.length > maxLength
+                ? `${message.text.slice(0, maxLength - 1)}…`
+                : message.text;
 
-            try {
+            return {
+                role: message.sender === "ai" ? "model" : "user",
+                content
+            };
+        });
 
-                const chatsRef = collection(
-                    db,
-                    "Users",
-                    currentUserId,
-                    "Chats"
-                );
-
-                const q = query(
-                    chatsRef,
-                    orderBy("time")
-                );
-
-                const snapshot = await getDocs(q);
-
-                snapshot.forEach(docSnap => {
-
-                    const data = docSnap.data();
-
-                    if (!data.text) return;
-
-                    history.push({
-
-                        role: data.sender === "ai"
-                            ? "model"
-                            : "user",
-
-                        content: data.text
-
-                    });
-
-                });
-
-            } catch (firebaseError) {
-
-                console.error(
-                    "History Error (Continuing without history):",
-                    firebaseError
-                );
-
-            }
-
+        if (!currentMessageWasSaved) {
+            currentHistory.push({
+                role: "user",
+                content: text || "[Image]"
+            });
         }
 
-        // -----------------------------
-        // KEEP LAST 15 MESSAGES
-        // -----------------------------
+        const previousMemory = previousChatMemory(chatId);
+        const recentHistory = currentHistory.slice(-15);
 
-        const recentHistory = history.slice(-15);
+        if (previousMemory) {
+            const latestUserMessage = [...recentHistory]
+                .reverse()
+                .find(message => message.role === "user");
 
-        recentHistory.push({
+            if (latestUserMessage) {
+                const currentPrompt = latestUserMessage.content;
+                const memoryBudget = Math.max(0, 11_950 - currentPrompt.length);
+                const memoryContext = previousMemory.slice(0, memoryBudget);
 
-            role: "user",
-
-            content: text || "[Image]"
-
-        });
+                if (memoryContext) {
+                    latestUserMessage.content = `${memoryContext}\n\nCurrent message: ${currentPrompt}`;
+                }
+            }
+        }
 
         // -----------------------------
         // BACKEND REQUEST
@@ -567,9 +830,14 @@ async function aiReply(text, image) {
 
         console.log("Connecting to Cadence AI Backend...");
 
-        console.log("User ID:", currentUserId);
-
         console.log("Image:", image ? "YES" : "NO");
+
+        const currentUser = auth.currentUser;
+        const idToken = await currentUser?.getIdToken();
+
+        if (!idToken) {
+            throw new Error("Please sign in again to continue.");
+        }
 
         const response = await fetch(
 
@@ -581,7 +849,8 @@ async function aiReply(text, image) {
 
                 headers: {
 
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${idToken}`
 
                 },
 
@@ -589,11 +858,15 @@ async function aiReply(text, image) {
 
                     history: recentHistory,
 
-                    image: image,
+                    image: image || null,
 
+                    // Keep compatibility with the currently deployed Worker.
+                    // The updated Worker ignores this and derives the UID from the token.
                     userId: currentUserId
 
-                })
+                }),
+
+                signal
 
             }
 
@@ -605,9 +878,11 @@ async function aiReply(text, image) {
 
         const responseText = await response.text();
 
-        console.log("Backend Status:", response.status);
+        if (signal.aborted) {
+            throw new DOMException("Response stopped.", "AbortError");
+        }
 
-        console.log("Backend Raw Response:", responseText);
+        console.log("Backend Status:", response.status);
 
         let data;
 
@@ -682,37 +957,42 @@ async function aiReply(text, image) {
         // DISPLAY AI MESSAGE
         // -----------------------------
 
-        const message = document.createElement("div");
+        responseMessage = document.createElement("div");
 
-        message.className = "message ai";
+        responseMessage.className = "message ai";
 
         const content = document.createElement("div");
 
         content.className = "message-content";
 
-        message.appendChild(content);
+        responseMessage.appendChild(content);
 
-        message.appendChild(createCopyButton(reply));
-
-        chat.appendChild(message);
+        chat.appendChild(responseMessage);
 
         // -----------------------------
-        // TYPE ANIMATION
+        // RENDER THE COMPLETE RESPONSE AT ONCE
         // -----------------------------
 
-        await typeMessage(message, reply);
+        displayedReply = typeMessage(responseMessage, reply);
+        responseMessage.appendChild(createCopyButton(displayedReply));
 
         // -----------------------------
         // SAVE AI RESPONSE
         // -----------------------------
 
-        await saveMessage(reply, "ai");
+        await saveMessage(reply, "ai", chatId);
 
         console.log("Cadence AI: Reply delivered.");
 
     } catch (error) {
 
         typing.remove();
+
+        if (signal.aborted || error?.name === "AbortError") {
+            if (responseMessage) responseMessage.remove();
+            addMessage("Response stopped.", "ai");
+            return;
+        }
 
         console.error("AI Communication Error:", error);
 
@@ -723,12 +1003,18 @@ async function aiReply(text, image) {
 
     } finally {
 
+        typing.remove();
+
         // Clear image after processing
 
         selectedImage = null;
 
         if (imageUpload) {
             imageUpload.value = "";
+        }
+
+        if (cameraUpload) {
+            cameraUpload.value = "";
         }
 
         if (imagePreview) {
@@ -752,17 +1038,39 @@ async function sendMessage() {
 
     if (isSending) return;
 
+    if (!currentUserId || !auth.currentUser) {
+        addMessage("Please sign in before sending a message.", "ai");
+        return;
+    }
+
+    if (!activeChatId) startNewChat();
+    const requestChatId = activeChatId;
+
     const text = input.value.trim();
 
     const imageToSend = selectedImage;
 
     if (!text && !imageToSend) return;
 
+    if (text.length > MAX_PROMPT_LENGTH) {
+        addMessage("Messages are limited to 12,000 characters.", "ai");
+        return;
+    }
+
+    const requestController = new AbortController();
+    activeRequestController = requestController;
     isSending = true;
 
     if (send) {
         send.disabled = true;
+        send.hidden = true;
     }
+
+    if (stopResponseButton) {
+        stopResponseButton.disabled = false;
+        stopResponseButton.hidden = false;
+    }
+    renderChatList();
 
     try {
 
@@ -798,7 +1106,7 @@ async function sendMessage() {
 
             content.className = "message-content";
 
-            content.innerHTML = marked.parse(text);
+            content.innerHTML = safeMarkdownHtml(text);
 
             message.appendChild(content);
 
@@ -818,9 +1126,10 @@ async function sendMessage() {
         // SAVE USER MESSAGE
         // -----------------------------
 
-        await saveMessage(
+        const savedMessageId = await saveMessage(
             text || "[Image]",
-            "user"
+            "user",
+            requestChatId
         );
 
         // -----------------------------
@@ -829,7 +1138,10 @@ async function sendMessage() {
 
         await aiReply(
             text,
-            imageToSend
+            imageToSend,
+            savedMessageId,
+            requestController.signal,
+            requestChatId
         );
 
     } catch (error) {
@@ -844,10 +1156,19 @@ async function sendMessage() {
     } finally {
 
         isSending = false;
+        activeRequestController = null;
 
         if (send) {
             send.disabled = false;
+            send.hidden = false;
         }
+
+        if (stopResponseButton) {
+            stopResponseButton.disabled = false;
+            stopResponseButton.hidden = true;
+        }
+
+        renderChatList();
 
         input.focus();
 
@@ -864,6 +1185,15 @@ if (send) {
 
     send.addEventListener("click", sendMessage);
 
+}
+
+if (stopResponseButton) {
+    stopResponseButton.addEventListener("click", () => {
+        if (!isSending || !activeRequestController) return;
+
+        stopResponseButton.disabled = true;
+        activeRequestController.abort();
+    });
 }
 
 
@@ -910,22 +1240,22 @@ if (attachBtn && attachMenu) {
 }
 
 if (pickImage && imageUpload) {
-
     pickImage.addEventListener("click", (e) => {
-
         e.preventDefault();
-
+        attachMenu?.classList.remove("show");
         imageUpload.click();
-
     });
-
 }
+
+
 
 if (pickCamera && cameraUpload) {
 
     pickCamera.addEventListener("click", (e) => {
 
         e.preventDefault();
+
+        attachMenu?.classList.remove("show");
 
         cameraUpload.click();
 
@@ -939,6 +1269,8 @@ if (pickDocument && documentUpload) {
 
         e.preventDefault();
 
+        attachMenu?.classList.remove("show");
+
         documentUpload.click();
 
     });
@@ -947,46 +1279,105 @@ if (pickDocument && documentUpload) {
 
 
 // =======================================
-// IMAGE PREVIEW
+// IMAGE AND DOCUMENT ATTACHMENTS
 // =======================================
 
-if (imageUpload) {
+const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
+const allowedImageTypes = new Set([
+    "image/jpeg",
+    "image/png",
+    "image/webp"
+]);
 
-    imageUpload.addEventListener("change", (e) => {
+function handleImageSelection(event) {
 
-        const file = e.target.files[0];
+    const imageInput = event.currentTarget;
+    const file = imageInput.files?.[0];
 
-        if (!file) return;
+    if (!file) return;
 
-        if (!file.type.startsWith("image/")) {
+    selectedImage = null;
+    imagePreview?.replaceChildren();
+    if (imagePreview) imagePreview.style.display = "none";
 
-            alert("Please select an image.");
+    if (!allowedImageTypes.has(file.type.toLowerCase())) {
 
+        alert("Choose a PNG, JPEG, or WebP image.");
+        imageInput.value = "";
+        return;
+
+    }
+
+    if (file.size > MAX_IMAGE_BYTES) {
+        alert("Images must be 4 MB or smaller.");
+        imageInput.value = "";
+        return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+
+        if (typeof reader.result !== "string" || !imagePreview) {
+            alert("That image could not be loaded. Please choose another.");
+            imageInput.value = "";
             return;
-
         }
 
-        const reader = new FileReader();
+        selectedImage = reader.result;
 
-        reader.onload = () => {
+        const preview = document.createElement("img");
+        preview.src = selectedImage;
+        preview.className = "preview-image";
+        preview.alt = "Image attachment preview";
 
-            selectedImage = reader.result;
+        imagePreview.replaceChildren(preview);
+        imagePreview.style.display = "block";
+    };
 
-            imagePreview.style.display = "block";
+    reader.onerror = () => {
+        alert("That image could not be read. Please choose another.");
+        imageInput.value = "";
+    };
 
-            imagePreview.innerHTML = `
-                <img
-                    src="${selectedImage}"
-                    class="preview-image"
-                >
-            `;
+    reader.readAsDataURL(file);
+}
 
-        };
+for (const imageInput of [imageUpload, cameraUpload]) {
+    imageInput?.addEventListener("change", handleImageSelection);
+}
 
-        reader.readAsDataURL(file);
+if (documentUpload) {
+    documentUpload.addEventListener("change", async (event) => {
+        const documentInput = event.currentTarget;
+        const file = documentInput.files?.[0];
+        if (!file) return;
 
+        if (!file.name.toLowerCase().endsWith(".txt")) {
+            alert("Only plain text (.txt) documents are supported right now.");
+            documentInput.value = "";
+            return;
+        }
+
+        try {
+            const fileText = await file.text();
+            if (!fileText.trim() || fileText.length > 9_000) {
+                alert("Choose a non-empty text file with 9,000 characters or fewer.");
+                return;
+            }
+
+            const attachment = `Text from ${file.name}:\n\n${fileText}`;
+            input.value = input.value.trim()
+                ? `${input.value.trim()}\n\n${attachment}`
+                : attachment;
+            input.focus();
+        } catch (error) {
+            console.error("Document Read Error:", error);
+            alert("That text file could not be read.");
+        } finally {
+            documentInput.value = "";
+        }
     });
-
 }
 
 
@@ -1062,24 +1453,41 @@ if (voiceBtn) {
 // THEME TOGGLE
 // =======================================
 
-if (themeToggle) {
+function applyTheme(isDark) {
+    document.body.classList.toggle("dark", isDark);
 
-    document.body.classList.add("dark");
+    if (themeToggle) {
+        themeToggle.innerText = isDark ? "☀️" : "🌙";
+        themeToggle.setAttribute("aria-label", isDark ? "Switch to light theme" : "Switch to dark theme");
+    }
 
-    themeToggle.innerText = "☀️";
-
-    themeToggle.addEventListener("click", () => {
-
-        document.body.classList.toggle("dark");
-
-        themeToggle.innerText =
-            document.body.classList.contains("dark")
-                ? "☀️"
-                : "🌙";
-
-    });
-
+    if (sidebarThemeToggle) {
+        sidebarThemeToggle.textContent = isDark ? "Switch to light mode" : "Switch to dark mode";
+        sidebarThemeToggle.setAttribute("aria-pressed", String(isDark));
+    }
 }
+
+function toggleTheme() {
+    const isDark = !document.body.classList.contains("dark");
+    applyTheme(isDark);
+
+    try {
+        localStorage.setItem("cadence-theme", isDark ? "dark" : "light");
+    } catch (error) {
+        console.warn("Theme preference could not be saved.");
+    }
+}
+
+let prefersDarkTheme = true;
+try {
+    prefersDarkTheme = localStorage.getItem("cadence-theme") !== "light";
+} catch (error) {
+    // The default theme remains dark when local storage is unavailable.
+}
+applyTheme(prefersDarkTheme);
+
+themeToggle?.addEventListener("click", toggleTheme);
+sidebarThemeToggle?.addEventListener("click", toggleTheme);
 
 
 // =======================================

@@ -2,219 +2,289 @@
 <html lang="en">
 
 <head>
-
-    <link rel="icon" type="image/png"
-        href="https://raw.githubusercontent.com/CadenceaOfficial/Cadencea-Artificial-Intelligence/refs/heads/main/image.png">
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b0b0b">
 
-    <title>Cadei!</title>
+    <title>Cadence AI</title>
+
+    <meta name="description" content="Cadence AI — Your intelligent AI assistant.">
+
+    <link rel="icon" type="image/png" href="./cadencea-mark.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
 
     <link rel="stylesheet" href="style.css">
 
-</head>
+    <!-- KaTeX -->
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 
+</head>
 
 <body class="dark">
 
+    <!-- Background -->
+    <div class="background"></div>
 
-    <!-- Welcome Login Modal -->
-
+    <!-- Login Modal -->
     <div class="welcome-overlay" id="welcome">
 
         <div class="welcome-box">
 
-
             <div class="welcome-icon">
-
-                <img src="https://github.com/CadenceaOfficial/Cadencea-Artificial-Intelligence/blob/main/image.png?raw=true"
-                    alt="Cadencea Logo" height="100" width="100">
-
+                <img
+                    src="https://github.com/CadenceaOfficial/Cadencea-Artificial-Intelligence/blob/main/image.png?raw=true"
+                    alt="Cadence AI Logo">
             </div>
 
+            <div class="welcome-label">WELCOME TO</div>
 
-
-            <h2>
-                Welcome to Cadei
-            </h2>
-
-
+            <h2>Cadence <span>AI</span></h2>
 
             <p>
-                Sign in with your Google Account to continue
+                Your intelligent companion for learning,
+                creating and exploring new possibilities.
             </p>
 
+            <button id="googleLogin" type="button">
 
-
-            <button id="googleLogin">
+                <img
+                    src="https://github.com/CadenceaOfficial/Cadencea-Artificial-Intelligence/blob/main/GOOGLE%20TRANSPARENT%20ICON.webp?raw=true"
+                    alt="Google"
+                    width="21"
+                    height="21">
 
                 Continue with Google
 
-                <img src="https://github.com/CadenceaOfficial/Cadencea-Artificial-Intelligence/blob/main/GOOGLE%20TRANSPARENT%20ICON.webp?raw=true"
-                    width="20" height="20">
-
             </button>
 
+            <div class="login-note">
+                Secure authentication powered by Google
+            </div>
 
         </div>
 
     </div>
 
+    <aside class="sidebar" id="sidebar" aria-label="Account and chat navigation">
+        <button
+            class="sidebar-handle"
+            id="sidebarToggle"
+            type="button"
+            aria-label="Open navigation"
+            aria-expanded="false">
+            <span class="sidebar-handle-line" aria-hidden="true"></span>
+        </button>
 
-
-    <div class="background"></div>
-
-
-
-    <div class="app">
-        <!-- Header -->
-
-        <header>
-
-
-            <div class="profile">
-
-                <img id="userPhoto" src="" alt="Profile">
-
+        <div class="sidebar-content">
+            <div class="sidebar-account">
+                <img id="sidebarAvatar" alt="" hidden>
+                <span id="sidebarAvatarFallback" class="sidebar-avatar-fallback">U</span>
+                <div class="sidebar-account-copy">
+                    <strong id="sidebarUserName">Your account</strong>
+                    <span id="sidebarUserEmail">Sign in to sync your chats</span>
+                </div>
             </div>
 
-
-
-            <div class="brand">
-
-                <h1 id="greeting">
-                    Hello!
-                </h1>
-
-
-                <p>
-                    Powered by Cadencea AI
-                </p>
-
-
-            </div>
-
-
-
-            <button id="themeToggle">
-
-                ☀️
-
+            <button class="sidebar-new-chat" id="newChatButton" type="button">
+                <span aria-hidden="true">+</span>
+                New chat
             </button>
 
+            <div class="sidebar-section-heading">Chats</div>
+            <div class="chat-list" id="chatList" aria-label="Your chats"></div>
 
-        </header>
-
-
-
-
-
-        <!-- Chat Area -->
-
-        <main id="chat"></main>
-        <footer>
-
-            <!-- Attachment -->
-            <div class="attachment-wrapper">
-
-                <button id="attach" type="button">
-
-                    <img src="https://raw.githubusercontent.com/CadenceaOfficial/Cadencea-Artificial-Intelligence/ec8eccc96f4791f5fe4046657987756b3e952104/icons/plus%20.svg"
-                        class="footer-icon" alt="Attach">
-
+            <div class="sidebar-actions">
+                <button class="sidebar-action" id="settingsButton" type="button" aria-expanded="false">
+                    <span class="sidebar-action-icon" aria-hidden="true">⚙</span>
+                    Settings
                 </button>
+                <div class="sidebar-settings-panel" id="settingsPanel" hidden>
+                    <span>Appearance</span>
+                    <button class="sidebar-theme-toggle" id="sidebarThemeToggle" type="button">Dark mode</button>
+                </div>
+                <button class="sidebar-action sidebar-logout" id="logoutButton" type="button">
+                    <span class="sidebar-action-icon" aria-hidden="true">↪</span>
+                    Log out
+                </button>
+            </div>
+        </div>
+    </aside>
 
-                <div id="attachMenu" class="attach-menu">
 
-                    <button id="pickImage" type="button">
+    <!-- Main Application -->
+    <div class="app">
 
-                        <img src="icons/photos.svg" class="menu-icon" alt="Gallery">
+        <!-- Header -->
+        <header>
 
-                    </button>
+            <div class="header-left">
 
-                    <button id="pickCamera" type="button">
+                <div class="brand-logo">
+                    <img
+                        src="./cadencea-mark.png"
+                        alt="Cadencea AI logo">
+                </div>
 
-                        <img src="icons/camera.svg" class="menu-icon" alt="Camera">
+                <div class="brand">
 
-                    </button>
+                    <h1 id="greeting">Hello!</h1>
 
-                    <button id="pickDocument" type="button">
-
-                        <img src="icons/documents.svg" class="menu-icon" alt="Document">
-
-                    </button>
+                    <p>Powered by Cadencea AI</p>
 
                 </div>
 
             </div>
 
 
-            <!-- Hidden Inputs -->
+            <div class="header-right">
 
-            <input type="file" id="imageUpload" accept="image/*" hidden>
+                <div class="online-status">
+                    <span></span>
+                    Online
+                </div>
 
-            <input type="file" id="cameraUpload" accept="image/*" capture="environment" hidden>
+                <button id="themeToggle" type="button" aria-label="Toggle theme">
+                    ☀️
+                </button>
 
-            <input type="file" id="documentUpload" accept=".pdf,.doc,.docx,.txt" hidden>
+                <div class="profile">
+                    <img id="userPhoto" src="" alt="Profile">
+                </div>
 
+            </div>
+
+        </header>
+
+
+        <!-- Chat Area -->
+        <main id="chat">
+
+            <!-- Welcome message is inserted here by JavaScript -->
+
+        </main>
+
+
+        <!-- Message Composer -->
+        <footer>
 
             <!-- Image Preview -->
-
             <div id="imagePreview"></div>
 
 
-            <!-- Message Box -->
+            <div class="input-container">
 
-            <textarea id="prompt" rows="1" placeholder="Message Cadence AI..."></textarea>
+                <!-- Attachment Button -->
+                <div class="attachment-wrapper">
+
+                    <button id="attach" type="button" aria-label="Attach file">
+
+                        <img
+                            src="https://raw.githubusercontent.com/CadenceaOfficial/Cadencea-Artificial-Intelligence/ec8eccc96f4791f5fe4046657987756b3e952104/icons/plus%20.svg"
+                            class="footer-icon"
+                            alt="Attach">
+
+                    </button>
 
 
-            <!-- Voice -->
+                    <!-- Attachment Menu -->
+                    <div id="attachMenu" class="attach-menu">
 
-            <button id="voice" type="button">
+                        <button id="pickImage" type="button" aria-label="Choose image">
+                            <img src="icons/photos.svg" class="menu-icon" alt="Gallery">
+                        </button>
 
-                <img src="icons/sound.png" class="footer-icon" alt="Voice">
+                        <button id="pickCamera" type="button" aria-label="Open camera">
+                            <img src="icons/camera.svg" class="menu-icon" alt="Camera">
+                        </button>
 
-            </button>
+                        <button id="pickDocument" type="button" aria-label="Choose document">
+                            <img src="icons/documents.svg" class="menu-icon" alt="Document">
+                        </button>
+
+                    </div>
+
+                </div>
 
 
-            <!-- Send -->
+                <!-- Hidden File Inputs -->
+                <input type="file" id="imageUpload"
+                    accept="image/png,image/jpeg,image/webp" hidden>
 
-            <button id="send" type="button">
+                <input type="file" id="cameraUpload"
+                    accept="image/png,image/jpeg,image/webp"
+                    capture="environment" hidden>
 
-                <img src="icons/send.svg" class="footer-icon" alt="Send">
+                <input type="file" id="documentUpload"
+                    accept=".txt,text/plain" hidden>
 
-            </button>
+
+                <!-- Message Input -->
+                <textarea
+                    id="prompt"
+                    rows="1"
+                    placeholder="Message Cadence AI..."
+                    aria-label="Message Cadence AI"></textarea>
+
+
+                <!-- Voice Button -->
+                <button id="voice" type="button" aria-label="Voice input">
+
+                    <img src="icons/sound.png" class="footer-icon" alt="Voice">
+
+                </button>
+
+
+                <!-- Send Button -->
+                <button id="send" type="button" aria-label="Send message">
+
+                    <img src="icons/send.svg" class="footer-icon" alt="Send">
+
+                </button>
+
+                <button id="stopResponse" type="button" aria-label="Stop response" title="Stop response" hidden>
+                    <span class="stop-response-icon" aria-hidden="true"></span>
+                    <span>Stop</span>
+                </button>
+
+            </div>
+
+
+            <p class="footer-note">
+                Cadencea Artificial Intelligence Can Make Mistakes. Verify Important Info.
+            </p>
 
         </footer>
-
 
     </div>
 
 
+    <!-- JavaScript Libraries -->
 
+    <script defer
+        src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js">
+    </script>
 
-    <!-- Math + Markdown -->
+    <script defer
+        src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js">
+    </script>
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer
+        src="https://cdn.jsdelivr.net/npm/marked/marked.min.js">
+    </script>
 
-
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js">
+    <script defer
+        src="https://cdn.jsdelivr.net/npm/dompurify@3.5.0/dist/purify.min.js">
     </script>
 
 
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js">
-    </script>
-
-
-    <script defer src="https://cdn.jsdelivr.net/npm/marked/marked.min.js">
-    </script>
-
-
-    <script type="module" src="script.js">
-    </script>
-
+    <!-- Application Script -->
+    <script type="module" src="script.js"></script>
 
 </body>
 
