@@ -126,6 +126,119 @@ const MAX_PROMPT_LENGTH = 12_000;
 const MAX_CHAT_MEMORY_CHARS = 16_000;
 const LEGACY_CHAT_ID = "legacy";
 const CHAT_MESSAGE_MARKER = "--message--";
+const CHAT_TAB_STATE_KEY = "cadencea.active-chat-tab.v1";
+const CLOSED_CHAT_TAB_KEY = "cadencea.closed-chat-tab.v1";
+const CHAT_TAB_FEATURE_KEY = "cadencea.chat-tab-feature.v1";
+const CHAT_REOPEN_GRACE_MS = 60_000;
+const pageNavigationType = window.performance?.getEntriesByType?.("navigation")?.[0]?.type || "navigate";
+
+function readStoredChatTabState(storageName, key) {
+    try {
+        const value = JSON.parse(window[storageName].getItem(key) || "null");
+        return value && typeof value === "object" ? value : null;
+    } catch (error) {
+        return null;
+    }
+}
+
+function writeStoredChatTabState(storageName, key, value) {
+    try {
+        window[storageName].setItem(key, JSON.stringify(value));
+    } catch (error) {
+        console.warn("Chat tab state could not be saved.", error);
+    }
+}
+
+function removeStoredChatTabState(storageName, key) {
+    try {
+        window[storageName].removeItem(key);
+    } catch (error) {
+        console.warn("Chat tab state could not be cleared.", error);
+    }
+}
+
+function restoreChatIdForTab(userId) {
+    const now = Date.now();
+    const tabState = readStoredChatTabState("sessionStorage", CHAT_TAB_STATE_KEY);
+    const closedTab = readStoredChatTabState("localStorage", CLOSED_CHAT_TAB_KEY);
+    const closedAt = Number(closedTab?.closedAt);
+    const closedTabIsRecent = Number.isFinite(closedAt)
+        && now >= closedAt
+        && now - closedAt <= CHAT_REOPEN_GRACE_MS;
+    const matchingClosedTab = closedTab?.userId === userId
+        && closedTab?.chatId === tabState?.chatId
+        && closedTab?.sessionId === tabState?.sessionId;
+
+    if (tabState?.userId === userId && typeof tabState.chatId === "string") {
+        const lastActiveAt = Number(tabState.lastActiveAt);
+        const tabStateIsRecent = Number.isFinite(lastActiveAt)
+            && now >= lastActiveAt
+            && now - lastActiveAt <= CHAT_REOPEN_GRACE_MS;
+        const isReload = pageNavigationType === "reload";
+        const reloadWasActuallyRecent = !matchingClosedTab || closedTabIsRecent;
+
+        if ((isReload && reloadWasActuallyRecent) || (!isReload && tabStateIsRecent)) {
+            writeStoredChatTabState("sessionStorage", CHAT_TAB_STATE_KEY, {
+                ...tabState,
+                lastActiveAt: now
+            });
+            if (matchingClosedTab) removeStoredChatTabState("localStorage", CLOSED_CHAT_TAB_KEY);
+            return tabState.chatId;
+        }
+    }
+
+    if (closedTab?.userId === userId && closedTabIsRecent && typeof closedTab.chatId === "string") {
+        writeStoredChatTabState("sessionStorage", CHAT_TAB_STATE_KEY, {
+            userId,
+            chatId: closedTab.chatId,
+            sessionId: crypto.randomUUID(),
+            lastActiveAt: now
+        });
+        removeStoredChatTabState("localStorage", CLOSED_CHAT_TAB_KEY);
+        return closedTab.chatId;
+    }
+
+    if (tabState?.userId === userId) removeStoredChatTabState("sessionStorage", CHAT_TAB_STATE_KEY);
+    if (closedTab?.userId === userId || !closedTabIsRecent) {
+        removeStoredChatTabState("localStorage", CLOSED_CHAT_TAB_KEY);
+    }
+    return null;
+}
+
+function rememberClosedChatTab() {
+    if (!currentUserId || !activeChatId) return;
+
+    const tabState = readStoredChatTabState("sessionStorage", CHAT_TAB_STATE_KEY);
+    if (tabState?.userId !== currentUserId || tabState?.chatId !== activeChatId) return;
+
+    const closedAt = Date.now();
+    writeStoredChatTabState("sessionStorage", CHAT_TAB_STATE_KEY, {
+        ...tabState,
+        lastActiveAt: closedAt
+    });
+    writeStoredChatTabState("localStorage", CLOSED_CHAT_TAB_KEY, {
+        ...tabState,
+        closedAt
+    });
+}
+
+window.addEventListener("pagehide", rememberClosedChatTab);
+
+function saveActiveChatTabState() {
+    if (!currentUserId || !activeChatId) return;
+
+    const previousState = readStoredChatTabState("sessionStorage", CHAT_TAB_STATE_KEY);
+    const sessionId = previousState?.userId === currentUserId
+        ? previousState.sessionId
+        : crypto.randomUUID();
+
+    writeStoredChatTabState("sessionStorage", CHAT_TAB_STATE_KEY, {
+        userId: currentUserId,
+        chatId: activeChatId,
+        sessionId,
+        lastActiveAt: Date.now()
+    });
+}
 
 function updateSidebarAccount(user) {
     const displayName = user?.displayName || "Your account";
@@ -469,6 +582,7 @@ function openChat(chatId) {
     if (!chatId || isSending) return;
 
     activeChatId = chatId;
+    saveActiveChatTabState();
     if (!messagesByChatId.has(chatId)) messagesByChatId.set(chatId, []);
 
     chat.replaceChildren();
@@ -696,11 +810,19 @@ async function loadOldChats(userId = currentUserId) {
 
         refreshChatSessions();
 
-        if (chatSessions.length) {
+        const tabFeatureWasInitialized = readStoredChatTabState(
+            "localStorage",
+            CHAT_TAB_FEATURE_KEY
+        )?.initialized === true;
+        const chatIdToRestore = restoreChatIdForTab(userId);
+        if (chatIdToRestore) {
+            openChat(chatIdToRestore);
+        } else if (!tabFeatureWasInitialized && pageNavigationType === "reload" && chatSessions.length) {
             openChat(chatSessions[0].id);
         } else {
             startNewChat();
         }
+        writeStoredChatTabState("localStorage", CHAT_TAB_FEATURE_KEY, { initialized: true });
 
         console.log(`Firebase: Loaded ${chatSessions.length} chat sessions.`);
     } catch (error) {
