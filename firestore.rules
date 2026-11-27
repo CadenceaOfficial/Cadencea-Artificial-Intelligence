@@ -1,0 +1,27 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function ownsUserData(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function validChatMessage() {
+      return request.resource.data.keys().hasAll(["text", "sender", "time"])
+        && request.resource.data.keys().hasOnly(["text", "sender", "time"])
+        && request.resource.data.text is string
+        && request.resource.data.text.size() <= 900000
+        && request.resource.data.sender in ["user", "ai"]
+        && request.resource.data.time == request.time;
+    }
+
+    match /Users/{userId} {
+      allow read, create, update: if ownsUserData(userId);
+
+      match /Chats/{chatId} {
+        allow get, list: if ownsUserData(userId);
+        allow create: if ownsUserData(userId) && validChatMessage();
+      }
+    }
+  }
+}

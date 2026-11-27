@@ -339,12 +339,34 @@ function typeMessage(message, text) {
 // FIREBASE: SAVE MESSAGE
 // =======================================
 
-function chatIdFromMessageDocId(docId) {
+function chatIdFromMessageDocId(docId, data = {}) {
+    if (typeof data.chatId === "string" && data.chatId.trim()) {
+        return data.chatId.trim();
+    }
+
     const markerIndex = docId.indexOf(CHAT_MESSAGE_MARKER);
 
     return docId.startsWith("chat-") && markerIndex > 0
         ? docId.slice(0, markerIndex)
         : LEGACY_CHAT_ID;
+}
+
+function normalizeStoredChatMessage(data) {
+    const text = data.text ?? data.content ?? data.message;
+    const senderValue = String(data.sender ?? data.role ?? "").trim().toLowerCase();
+    const sender = ["ai", "assistant", "model", "bot", "cadence"].includes(senderValue)
+        ? "ai"
+        : ["user", "human"].includes(senderValue)
+            ? "user"
+            : null;
+
+    if (typeof text !== "string" || !sender) return null;
+
+    return {
+        text,
+        sender,
+        time: data.time ?? data.timestamp ?? data.createdAt ?? 0
+    };
 }
 
 function timestampMillis(value) {
@@ -656,15 +678,14 @@ async function loadOldChats(userId = currentUserId) {
 
         snapshot.docs.forEach(docSnap => {
             const data = docSnap.data();
-            if (typeof data.text !== "string" || !["user", "ai"].includes(data.sender)) return;
+            const message = normalizeStoredChatMessage(data);
+            if (!message) return;
 
-            const chatId = chatIdFromMessageDocId(docSnap.id);
+            const chatId = chatIdFromMessageDocId(docSnap.id, data);
             const messages = messagesByChatId.get(chatId) || [];
             messages.push({
                 id: docSnap.id,
-                text: data.text,
-                sender: data.sender,
-                time: data.time || 0
+                ...message
             });
             messagesByChatId.set(chatId, messages);
         });
