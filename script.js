@@ -117,8 +117,13 @@ let isSending = false;
 let activeRequestController = null;
 let activeChatId = null;
 let chatSessions = [];
+let chatHistoryReady = false;
+let loadedChatHistoryFor = null;
+let chatHistoryLoadPromise = null;
+let chatHistoryLoadUserId = null;
 const messagesByChatId = new Map();
 const MAX_PROMPT_LENGTH = 12_000;
+const MAX_CHAT_MEMORY_CHARS = 16_000;
 const LEGACY_CHAT_ID = "legacy";
 const CHAT_MESSAGE_MARKER = "--message--";
 
@@ -346,6 +351,10 @@ function timestampMillis(value) {
     if (typeof value?.toMillis === "function") return value.toMillis();
     if (value instanceof Date) return value.getTime();
     if (typeof value === "number") return value;
+    if (typeof value === "string") {
+        const parsed = Date.parse(value);
+        return Number.isFinite(parsed) ? parsed : 0;
+    }
     if (Number.isFinite(value?.seconds)) return value.seconds * 1000;
     return 0;
 }
@@ -469,40 +478,131 @@ function startNewChat() {
     input?.focus();
 }
 
-function previousChatMemory(chatId) {
-    const activeIndex = chatSessions.findIndex(session => session.id === chatId);
-    const previousSession = activeIndex >= 0
-        ? chatSessions[activeIndex + 1]
-        : chatSessions[0];
+function chatMemoryFor(chatId, currentPrompt = "") {
+    const previousSessions = chatSessions
+        .filter(session => session.id !== chatId && session.messages.length)
+        .sort((left, right) => right.updatedAt - left.updatedAt);
+    const activeSession = chatSessions.find(session => session.id === chatId);
+    const activeArchive = activeSession?.messages.slice(0, -12) || [];
 
-    if (!previousSession) return null;
-
-    const messages = previousSession.messages;
-    const selectedIndexes = new Set([
-        ...Array.from({ length: Math.min(4, messages.length) }, (_, index) => index),
-        ...Array.from(
-            { length: Math.min(6, messages.length) },
-            (_, index) => messages.length - Math.min(6, messages.length) + index
-        )
+    const stopWords = new Set([
+        "about", "after", "again", "before", "chat", "chats", "could", "did",
+        "discuss", "discussed", "discussion", "earlier", "from", "have", "help",
+        "last", "like", "more", "our", "please", "previous", "remember", "talk",
+        "talked", "tell", "that", "them", "this", "what", "when", "where", "which",
+        "while", "with", "would", "your"
     ]);
+    const queryTerms = [...new Set((currentPrompt.toLowerCase().match(/[a-z0-9]{3,}/g) || []))]
+        .filter(term => !stopWords.has(term))
+        .slice(0, 40);
 
-    const excerpt = [...selectedIndexes]
-        .sort((left, right) => left - right)
-        .map(index => messages[index])
-        .filter(Boolean)
-        .map(message => {
-            const speaker = message.sender === "ai" ? "Cadence AI" : "User";
-            const compactText = message.text.replace(/\s+/g, " ").trim();
-            const text = compactText.length > 650
-                ? `${compactText.slice(0, 500)}… ${compactText.slice(-140)}`
-                : compactText;
-            return `${speaker}: ${text}`;
-        })
-        .join("\n");
+    const scoreMessage = message => {
+        if (!queryTerms.length) return 0;
+        const words = new Set(message.text.toLowerCase().match(/[a-z0-9]{3,}/g) || []);
+        return queryTerms.reduce((total, term) => total + Number(words.has(term)), 0);
+    };
 
-    if (!excerpt) return null;
+    if (queryTerms.length > 0 && previousSessions.length > 1) {
+        const [mostRecent, ...olderSessions] = previousSessions;
+        olderSessions.sort((left, right) => {
+            const score = session => {
+                const titleWords = new Set(session.title.toLowerCase().match(/[a-z0-9]{3,}/g) || []);
+                return session.messages.reduce(
+                    (total, message) => total + scoreMessage(message),
+                    queryTerms.reduce((total, term) => total + Number(titleWords.has(term)) * 2, 0)
+                );
+            };
+            return score(right) - score(left) || right.updatedAt - left.updatedAt;
+        });
+        previousSessions.splice(0, previousSessions.length, mostRecent, ...olderSessions);
+    }
 
-    return `Reference notes from the user's immediately previous chat, “${previousSession.title}”. These excerpts include its opening and recent messages:\n${excerpt}`;
+    const memorySections = [];
+    const memoryHeader = "Saved conversation context. Prior chats are listed newest first; earlier turns from the active chat and other saved chats may also be included:";
+    let remaining = MAX_CHAT_MEMORY_CHARS - memoryHeader.length;
+
+    const addMemorySection = (label, title, messages, options) => {
+        if (!messages.length || remaining <= 0) return;
+
+        const { firstCount, lastCount, extraCount, maxMessageLength } = options;
+        const selectedIndexes = new Set([
+            ...Array.from({ length: Math.min(firstCount, messages.length) }, (_, index) => index),
+            ...Array.from(
+                { length: Math.min(lastCount, messages.length) },
+                (_, index) => messages.length - Math.min(lastCount, messages.length) + index
+            )
+        ]);
+
+        if (queryTerms.length && extraCount > 0) {
+            messages
+                .map((message, index) => ({ index, score: scoreMessage(message) }))
+                .filter(item => item.score > 0 && !selectedIndexes.has(item.index))
+                .sort((left, right) => right.score - left.score)
+                .slice(0, extraCount)
+                .forEach(item => selectedIndexes.add(item.index));
+        }
+
+        const lines = [...selectedIndexes]
+            .sort((left, right) => left - right)
+            .map(index => messages[index])
+            .filter(Boolean)
+            .map(message => {
+                const speaker = message.sender === "ai" ? "Cadence AI" : "User";
+                const compactText = message.text.replace(/\s+/g, " ").trim();
+                const text = compactText.length > maxMessageLength
+                    ? `${compactText.slice(0, maxMessageLength - 100)}… ${compactText.slice(-99)}`
+                    : compactText;
+                return `${speaker}: ${text}`;
+            });
+
+        const section = `${label}${title ? ` — ${title}` : ""}\n${lines.join("\n")}`;
+        const boundedSection = section.length > remaining
+            ? section.slice(0, remaining)
+            : section;
+        memorySections.push(boundedSection);
+        remaining -= boundedSection.length + 2;
+    };
+
+    if (previousSessions.length) {
+        const [mostRecent, ...olderSessions] = previousSessions;
+        addMemorySection(
+            "MOST RECENT PRIOR CHAT",
+            mostRecent.title,
+            mostRecent.messages,
+            { firstCount: 4, lastCount: 6, extraCount: 4, maxMessageLength: 500 }
+        );
+
+        if (activeArchive.length) {
+            addMemorySection(
+                "EARLIER TURNS FROM THE ACTIVE CHAT",
+                "",
+                activeArchive,
+                { firstCount: 2, lastCount: 4, extraCount: 4, maxMessageLength: 300 }
+            );
+        }
+
+        olderSessions.forEach((session, index) => {
+            if (remaining <= 0) return;
+            addMemorySection(
+                `OLDER CHAT ${index + 2}`,
+                session.title,
+                session.messages,
+                { firstCount: 2, lastCount: 2, extraCount: 2, maxMessageLength: 250 }
+            );
+        });
+    }
+
+    if (!previousSessions.length && activeArchive.length) {
+        addMemorySection(
+            "EARLIER TURNS FROM THE ACTIVE CHAT",
+            "",
+            activeArchive,
+            { firstCount: 2, lastCount: 4, extraCount: 4, maxMessageLength: 300 }
+        );
+    }
+
+    if (!memorySections.length) return "";
+    return `${memoryHeader}\n\n${memorySections.join("\n\n")}`.slice(0, MAX_CHAT_MEMORY_CHARS);
 }
 
 async function saveMessage(text, sender, chatId = activeChatId) {
@@ -544,12 +644,14 @@ async function saveMessage(text, sender, chatId = activeChatId) {
 // FIREBASE: LOAD CHAT SESSIONS
 // =======================================
 
-async function loadOldChats() {
-    if (!currentUserId) return;
+async function loadOldChats(userId = currentUserId) {
+    if (!userId) return;
 
     try {
-        const chatsRef = collection(db, "Users", currentUserId, "Chats");
+        const chatsRef = collection(db, "Users", userId, "Chats");
         const snapshot = await getDocs(chatsRef);
+        if (currentUserId !== userId) return;
+
         messagesByChatId.clear();
 
         snapshot.docs.forEach(docSnap => {
@@ -579,8 +681,10 @@ async function loadOldChats() {
             startNewChat();
         }
 
-        console.log("Firebase: Chat sessions loaded.");
+        console.log(`Firebase: Loaded ${chatSessions.length} chat sessions.`);
     } catch (error) {
+        if (currentUserId !== userId) return;
+
         console.error("Firebase Load Error:", error);
         messagesByChatId.clear();
         chatSessions = [];
@@ -589,6 +693,32 @@ async function loadOldChats() {
             "I couldn't load your previous chats, but you can still start a new conversation.",
             "ai"
         );
+    }
+}
+
+async function ensureChatHistoryLoaded(userId = currentUserId) {
+    if (!userId) return;
+    if (chatHistoryReady && loadedChatHistoryFor === userId) return;
+    if (chatHistoryLoadPromise && chatHistoryLoadUserId === userId) {
+        return chatHistoryLoadPromise;
+    }
+
+    chatHistoryReady = false;
+    chatHistoryLoadUserId = userId;
+    const loadPromise = loadOldChats(userId);
+    chatHistoryLoadPromise = loadPromise;
+
+    try {
+        await loadPromise;
+        if (currentUserId === userId) {
+            loadedChatHistoryFor = userId;
+            chatHistoryReady = true;
+        }
+    } finally {
+        if (chatHistoryLoadPromise === loadPromise) {
+            chatHistoryLoadPromise = null;
+            chatHistoryLoadUserId = null;
+        }
     }
 }
 
@@ -636,7 +766,8 @@ if (googleLogin) {
                 console.error("Firebase Profile Save Error:", profileError);
             }
 
-            if (welcome) {
+            await ensureChatHistoryLoaded(user.uid);
+            if (auth.currentUser?.uid === user.uid && welcome) {
                 welcome.style.display = "none";
             }
 
@@ -668,6 +799,10 @@ onAuthStateChanged(auth, async (user) => {
 
         activeRequestController?.abort();
         currentUserId = null;
+        chatHistoryReady = false;
+        loadedChatHistoryFor = null;
+        chatHistoryLoadPromise = null;
+        chatHistoryLoadUserId = null;
         activeChatId = null;
         chatSessions = [];
         messagesByChatId.clear();
@@ -696,11 +831,11 @@ onAuthStateChanged(auth, async (user) => {
 
     }
 
-    if (welcome) {
+    await ensureChatHistoryLoaded(user.uid);
+
+    if (auth.currentUser?.uid === user.uid && welcome) {
         welcome.style.display = "none";
     }
-
-    await loadOldChats();
 
 });
 
@@ -804,24 +939,12 @@ async function aiReply(text, image, savedMessageId, signal, chatId) {
             });
         }
 
-        const previousMemory = previousChatMemory(chatId);
+        const conversationMemory = chatMemoryFor(chatId, text);
         const recentHistory = currentHistory.slice(-15);
-
-        if (previousMemory) {
-            const latestUserMessage = [...recentHistory]
-                .reverse()
-                .find(message => message.role === "user");
-
-            if (latestUserMessage) {
-                const currentPrompt = latestUserMessage.content;
-                const memoryBudget = Math.max(0, 11_950 - currentPrompt.length);
-                const memoryContext = previousMemory.slice(0, memoryBudget);
-
-                if (memoryContext) {
-                    latestUserMessage.content = `${memoryContext}\n\nCurrent message: ${currentPrompt}`;
-                }
-            }
-        }
+        console.log(
+            "Saved chat context:",
+            conversationMemory ? `${conversationMemory.length} characters attached` : "no earlier chats found"
+        );
 
         // -----------------------------
         // BACKEND REQUEST
@@ -856,6 +979,8 @@ async function aiReply(text, image, savedMessageId, signal, chatId) {
                 body: JSON.stringify({
 
                     history: recentHistory,
+
+                    memory: conversationMemory,
 
                     image: image || null,
 
@@ -1086,6 +1211,10 @@ function animatePromptToMessage(sourceRect, message, text) {
 async function sendMessage({ animateFromComposer = false } = {}) {
 
     if (isSending) return;
+
+    if (currentUserId && !chatHistoryReady) {
+        await ensureChatHistoryLoaded(currentUserId);
+    }
 
     if (!currentUserId || !auth.currentUser) {
         addMessage("Please sign in before sending a message.", "ai");
