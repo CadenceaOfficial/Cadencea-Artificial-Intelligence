@@ -111,6 +111,7 @@ const documentUpload = document.getElementById("documentUpload");
 // =======================================
 
 let currentUserId = null;
+let currentUserName = "You";
 let selectedImage = null;
 let isSending = false;
 let activeRequestController = null;
@@ -124,6 +125,8 @@ const CHAT_MESSAGE_MARKER = "--message--";
 function updateSidebarAccount(user) {
     const displayName = user?.displayName || "Your account";
     const photoUrl = user?.photoURL || "";
+    const accountLabel = user?.displayName?.trim() || user?.email?.split("@")[0] || "You";
+    currentUserName = accountLabel.split(/\s+/)[0] || "You";
 
     if (sidebarUserName) sidebarUserName.textContent = displayName;
     if (sidebarUserEmail) sidebarUserEmail.textContent = user?.email || "Sign in to sync your chats";
@@ -445,12 +448,8 @@ function openChat(chatId) {
         emptyState.className = "empty-chat-state";
 
         const heading = document.createElement("strong");
-        heading.textContent = "A clear page for a new idea.";
+        heading.textContent = `Ready to Give a Kick Start, ${currentUserName}?`;
         emptyState.appendChild(heading);
-
-        const copy = document.createElement("p");
-        copy.textContent = "Ask Cadence AI anything to get started.";
-        emptyState.appendChild(copy);
 
         chat.appendChild(emptyState);
     } else {
@@ -1034,7 +1033,57 @@ async function aiReply(text, image, savedMessageId, signal, chatId) {
 // SEND MESSAGE
 // =======================================
 
-async function sendMessage() {
+function animatePromptToMessage(sourceRect, message, text) {
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (!sourceRect || !message || !text || reduceMotion || !Element.prototype.animate) return;
+
+    const targetRect = message.getBoundingClientRect();
+    if (!targetRect.width || !targetRect.height) return;
+
+    const flight = document.createElement("div");
+    const flightText = text.replace(/\s+/g, " ").trim();
+    flight.className = "sent-message-flight";
+    flight.textContent = flightText.length > 180
+        ? `${flightText.slice(0, 177)}…`
+        : flightText;
+
+    const flightWidth = Math.min(Math.max(sourceRect.width, 220), 440);
+    flight.style.left = `${sourceRect.left}px`;
+    flight.style.top = `${sourceRect.top}px`;
+    flight.style.width = `${flightWidth}px`;
+    document.body.appendChild(flight);
+
+    const scale = Math.min(1, targetRect.width / flightWidth);
+    const offsetX = targetRect.left - sourceRect.left;
+    const offsetY = targetRect.top - sourceRect.top;
+    message.classList.add("message-flight-pending");
+
+    const animation = flight.animate(
+        [
+            { transform: "translate(0, 0) scale(1)", opacity: 0.96 },
+            {
+                transform: `translate(${offsetX}px, ${offsetY}px) scale(${scale})`,
+                opacity: 0.15
+            }
+        ],
+        {
+            duration: 560,
+            easing: "cubic-bezier(.2, .78, .25, 1)",
+            fill: "forwards"
+        }
+    );
+
+    const finishAnimation = () => {
+        flight.remove();
+        message.classList.remove("message-flight-pending");
+        message.classList.add("message-flight-arrived");
+        window.setTimeout(() => message.classList.remove("message-flight-arrived"), 240);
+    };
+
+    animation.finished.then(finishAnimation, finishAnimation);
+}
+
+async function sendMessage({ animateFromComposer = false } = {}) {
 
     if (isSending) return;
 
@@ -1047,6 +1096,9 @@ async function sendMessage() {
     const requestChatId = activeChatId;
 
     const text = input.value.trim();
+    const composerRect = animateFromComposer && input
+        ? input.getBoundingClientRect()
+        : null;
 
     const imageToSend = selectedImage;
 
@@ -1112,9 +1164,14 @@ async function sendMessage() {
 
         }
 
+        chat.querySelector(".empty-chat-state")?.remove();
         chat.appendChild(message);
 
         chat.scrollTop = chat.scrollHeight;
+
+        if (text && composerRect) {
+            animatePromptToMessage(composerRect, message, text);
+        }
 
         // -----------------------------
         // CLEAR INPUT
@@ -1183,7 +1240,7 @@ async function sendMessage() {
 
 if (send) {
 
-    send.addEventListener("click", sendMessage);
+    send.addEventListener("click", () => sendMessage({ animateFromComposer: true }));
 
 }
 
