@@ -131,6 +131,9 @@ const CLOSED_CHAT_TAB_KEY = "cadencea.closed-chat-tab.v1";
 const CHAT_TAB_FEATURE_KEY = "cadencea.chat-tab-feature.v1";
 const CHAT_REOPEN_GRACE_MS = 60_000;
 const pageNavigationType = window.performance?.getEntriesByType?.("navigation")?.[0]?.type || "navigate";
+const SIDEBAR_CORNER_KEY = "cadencea.sidebar-mobile-corner.v1";
+const MOBILE_TABLET_MEDIA_QUERY = "(max-width: 1024px), (hover: none) and (pointer: coarse)";
+const SIDEBAR_CORNERS = new Set(["top-left", "top-right", "bottom-left", "bottom-right"]);
 
 function readStoredChatTabState(storageName, key) {
     try {
@@ -270,6 +273,145 @@ function toggleSidebar() {
     const isOpen = sidebar?.classList.toggle("is-open") || false;
     sidebarToggle?.setAttribute("aria-expanded", String(isOpen));
     sidebarToggle?.setAttribute("aria-label", isOpen ? "Close navigation" : "Open navigation");
+}
+
+function initializeMovableSidebar() {
+    if (!sidebar || !sidebarToggle || !window.matchMedia) return;
+
+    const mobileTabletMode = window.matchMedia(MOBILE_TABLET_MEDIA_QUERY);
+    let pointerDrag = null;
+    let suppressNextClick = false;
+    let suppressClickTimer = null;
+
+    const clearInlinePosition = () => {
+        ["top", "right", "bottom", "left", "transform"].forEach(property => {
+            sidebar.style.removeProperty(property);
+        });
+    };
+
+    const applySavedCorner = () => {
+        const savedCorner = readStoredChatTabState("localStorage", SIDEBAR_CORNER_KEY)?.corner;
+        if (SIDEBAR_CORNERS.has(savedCorner)) {
+            sidebar.dataset.mobileCorner = savedCorner;
+        } else {
+            delete sidebar.dataset.mobileCorner;
+        }
+        clearInlinePosition();
+    };
+
+    const resetDesktopPosition = () => {
+        delete sidebar.dataset.mobileCorner;
+        delete sidebar.dataset.dragging;
+        clearInlinePosition();
+    };
+
+    const suppressDragClick = event => {
+        if (!suppressNextClick) return;
+        suppressNextClick = false;
+        window.clearTimeout(suppressClickTimer);
+        event.preventDefault();
+        event.stopImmediatePropagation();
+    };
+
+    const suppressGeneratedClick = () => {
+        suppressNextClick = true;
+        window.clearTimeout(suppressClickTimer);
+        suppressClickTimer = window.setTimeout(() => {
+            suppressNextClick = false;
+        }, 500);
+    };
+
+    const finishPointerDrag = event => {
+        if (!pointerDrag || event.pointerId !== pointerDrag.pointerId) return;
+
+        const didMove = pointerDrag.didMove;
+        pointerDrag = null;
+
+        if (!didMove) return;
+
+        const bounds = sidebar.getBoundingClientRect();
+        const horizontalSide = bounds.left + bounds.width / 2 < window.innerWidth / 2
+            ? "left"
+            : "right";
+        const verticalSide = bounds.top + bounds.height / 2 < window.innerHeight / 2
+            ? "top"
+            : "bottom";
+        const corner = `${verticalSide}-${horizontalSide}`;
+
+        sidebar.dataset.mobileCorner = corner;
+        delete sidebar.dataset.dragging;
+        clearInlinePosition();
+        writeStoredChatTabState("localStorage", SIDEBAR_CORNER_KEY, { corner });
+        suppressGeneratedClick();
+    };
+
+    sidebarToggle.addEventListener("pointerdown", event => {
+        if (!mobileTabletMode.matches || sidebar.classList.contains("is-open")) return;
+        if (!event.isPrimary || (event.pointerType === "mouse" && event.button !== 0)) return;
+
+        const bounds = sidebar.getBoundingClientRect();
+        pointerDrag = {
+            pointerId: event.pointerId,
+            startX: event.clientX,
+            startY: event.clientY,
+            offsetX: event.clientX - bounds.left,
+            offsetY: event.clientY - bounds.top,
+            bounds,
+            didMove: false
+        };
+
+        try {
+            sidebarToggle.setPointerCapture(event.pointerId);
+        } catch (error) {
+            // Pointer capture can be unavailable in older mobile browsers.
+        }
+    });
+
+    sidebarToggle.addEventListener("pointermove", event => {
+        if (!pointerDrag || event.pointerId !== pointerDrag.pointerId) return;
+
+        const deltaX = event.clientX - pointerDrag.startX;
+        const deltaY = event.clientY - pointerDrag.startY;
+        if (!pointerDrag.didMove && Math.hypot(deltaX, deltaY) < 7) return;
+
+        if (!pointerDrag.didMove) {
+            pointerDrag.didMove = true;
+            sidebar.dataset.dragging = "true";
+            sidebar.style.transform = "none";
+            sidebar.style.right = "auto";
+            sidebar.style.bottom = "auto";
+        }
+
+        const maxLeft = Math.max(0, window.innerWidth - pointerDrag.bounds.width);
+        const maxTop = Math.max(0, window.innerHeight - pointerDrag.bounds.height);
+        const left = Math.min(maxLeft, Math.max(0, event.clientX - pointerDrag.offsetX));
+        const top = Math.min(maxTop, Math.max(0, event.clientY - pointerDrag.offsetY));
+
+        sidebar.style.left = `${left}px`;
+        sidebar.style.top = `${top}px`;
+        event.preventDefault();
+    });
+
+    sidebarToggle.addEventListener("pointerup", finishPointerDrag);
+    sidebarToggle.addEventListener("pointercancel", finishPointerDrag);
+    sidebarToggle.addEventListener("click", suppressDragClick, true);
+
+    const updateSidebarMode = event => {
+        if (event.matches) applySavedCorner();
+        else {
+            pointerDrag = null;
+            resetDesktopPosition();
+        }
+    };
+
+    if (mobileTabletMode.addEventListener) {
+        mobileTabletMode.addEventListener("change", updateSidebarMode);
+    } else {
+        mobileTabletMode.addListener(updateSidebarMode);
+    }
+
+    if (mobileTabletMode.matches) applySavedCorner();
+    else resetDesktopPosition();
 }
 
 
@@ -984,6 +1126,7 @@ onAuthStateChanged(auth, async (user) => {
 
 if (sidebarToggle) {
     sidebarToggle.addEventListener("click", toggleSidebar);
+    initializeMovableSidebar();
 }
 
 if (newChatButton) {

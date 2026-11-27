@@ -2364,6 +2364,10 @@ body:not(.dark) textarea {
     background: linear-gradient(180deg, #f2c69d, #b98053 50%, #f2c69d);
     box-shadow: 0 0 22px rgba(214, 170, 122, .18);
     transition:
+        top .22s ease,
+        right .22s ease,
+        bottom .22s ease,
+        left .22s ease,
         width .28s cubic-bezier(.2, .8, .2, 1),
         height .28s cubic-bezier(.2, .8, .2, 1),
         border-radius .28s,
@@ -2682,7 +2686,7 @@ body:not(.dark) textarea {
     }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 1024px), (hover: none) and (pointer: coarse) {
     .sidebar {
         left: 7px;
         width: 46px;
@@ -2696,7 +2700,66 @@ body:not(.dark) textarea {
 
     .sidebar-handle {
         width: 100%;
+        touch-action: none;
+        cursor: grab;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+
+    .sidebar-handle:active {
+        cursor: grabbing;
+        transform: none;
+    }
+
+    .sidebar.is-open .sidebar-handle {
+        width: 28px;
         touch-action: manipulation;
+        cursor: pointer;
+    }
+
+    .sidebar.is-open .sidebar-handle-line {
+        opacity: 0;
+        visibility: hidden;
+    }
+
+    .sidebar[data-mobile-corner="top-left"] {
+        top: calc(env(safe-area-inset-top, 0px) + 12px);
+        right: auto;
+        bottom: auto;
+        left: calc(env(safe-area-inset-left, 0px) + 8px);
+        transform: none;
+    }
+
+    .sidebar[data-mobile-corner="top-right"] {
+        top: calc(env(safe-area-inset-top, 0px) + 12px);
+        right: calc(env(safe-area-inset-right, 0px) + 8px);
+        bottom: auto;
+        left: auto;
+        transform: none;
+    }
+
+    .sidebar[data-mobile-corner="bottom-left"] {
+        top: auto;
+        right: auto;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+        left: calc(env(safe-area-inset-left, 0px) + 8px);
+        transform: none;
+    }
+
+    .sidebar[data-mobile-corner="bottom-right"] {
+        top: auto;
+        right: calc(env(safe-area-inset-right, 0px) + 8px);
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+        left: auto;
+        transform: none;
+    }
+
+    .sidebar[data-dragging="true"] {
+        transition: none !important;
+    }
+
+    .sidebar[data-dragging="true"] .sidebar-handle {
+        cursor: grabbing;
     }
 
     body:not(.dark) .sidebar {
