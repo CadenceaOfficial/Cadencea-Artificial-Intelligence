@@ -21,6 +21,10 @@ service cloud.firestore {
       match /Chats/{chatId} {
         allow get, list: if ownsUserData(userId);
         allow create: if ownsUserData(userId) && validChatMessage();
+        allow update: if ownsUserData(userId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["chatTitle"])
+          && request.resource.data.chatTitle is string
+          && request.resource.data.chatTitle.size() <= 44;
       }
     }
   }

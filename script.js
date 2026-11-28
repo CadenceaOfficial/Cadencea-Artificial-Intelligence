@@ -20,6 +20,7 @@ import {
     collection,
     doc,
     setDoc,
+    updateDoc,
     serverTimestamp,
     getDocs
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
@@ -426,29 +427,22 @@ function renderMarkdown(text) {
     wrapper.className = "message-content";
 
     wrapper.innerHTML = safeMarkdownHtml(text);
-
-    if (window.renderMathInElement) {
-
-        renderMathInElement(wrapper, {
-
-            delimiters: [
-                {
-                    left: "$$",
-                    right: "$$",
-                    display: true
-                },
-                {
-                    left: "$",
-                    right: "$",
-                    display: false
-                }
-            ]
-
-        });
-
-    }
+    renderMathExpressions(wrapper);
 
     return wrapper;
+}
+
+function renderMathExpressions(element) {
+    if (!window.renderMathInElement) return;
+
+    renderMathInElement(element, {
+        delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "$", right: "$", display: false }
+        ],
+        throwOnError: false,
+        strict: "ignore"
+    });
 }
 
 function safeMarkdownHtml(text) {
@@ -461,15 +455,31 @@ function safeMarkdownHtml(text) {
         return escaped.innerHTML.replace(/\n/g, "<br>");
     }
 
-    const rendered = window.marked.parse(source);
+    const mathExpressions = [];
+    const protectedSource = source.replace(/\$\$[\s\S]+?\$\$|\$(?!\$)[^\n$]+\$/g, expression => {
+        const placeholder = `CADENCEAMATHEXPRESSION${mathExpressions.length}END`;
+        mathExpressions.push({ placeholder, expression });
+        return placeholder;
+    });
+
+    const rendered = window.marked.parse(protectedSource);
+    let safeRendered;
 
     if (window.DOMPurify) {
-        return window.DOMPurify.sanitize(rendered);
+        safeRendered = window.DOMPurify.sanitize(rendered);
+    } else {
+        const escaped = document.createElement("span");
+        escaped.textContent = rendered;
+        safeRendered = escaped.innerHTML;
     }
 
-    const escaped = document.createElement("span");
-    escaped.textContent = source;
-    return escaped.innerHTML.replace(/\n/g, "<br>");
+    return mathExpressions.reduce((html, { placeholder, expression }) => {
+        const escapedExpression = expression
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+        return html.replaceAll(placeholder, escapedExpression);
+    }, safeRendered);
 }
 
 
@@ -561,27 +571,7 @@ function typeMessage(message, text) {
     const content = message.querySelector(".message-content");
 
     content.innerHTML = safeMarkdownHtml(text);
-
-    if (window.renderMathInElement) {
-
-        renderMathInElement(content, {
-
-            delimiters: [
-                {
-                    left: "$$",
-                    right: "$$",
-                    display: true
-                },
-                {
-                    left: "$",
-                    right: "$",
-                    display: false
-                }
-            ]
-
-        });
-
-    }
+    renderMathExpressions(content);
 
     chat.scrollTop = chat.scrollHeight;
 
@@ -620,7 +610,8 @@ function normalizeStoredChatMessage(data) {
     return {
         text,
         sender,
-        time: data.time ?? data.timestamp ?? data.createdAt ?? 0
+        time: data.time ?? data.timestamp ?? data.createdAt ?? 0,
+        chatTitle: typeof data.chatTitle === "string" ? data.chatTitle : null
     };
 }
 
@@ -637,6 +628,9 @@ function timestampMillis(value) {
 }
 
 function titleForChat(chatId, messages) {
+    const generatedTitle = messages.find(message => typeof message.chatTitle === "string")?.chatTitle;
+    if (generatedTitle) return generatedTitle;
+
     const firstUserMessage = messages.find(message =>
         message.sender === "user" && message.text && message.text !== "[Image]"
     );
@@ -647,6 +641,63 @@ function titleForChat(chatId, messages) {
 
     const title = firstUserMessage.text.replace(/\s+/g, " ").trim();
     return title.length > 38 ? `${title.slice(0, 37)}…` : title;
+}
+
+function normalizeChatTitle(value) {
+    return String(value || "")
+        .split(/\r?\n/, 1)[0]
+        .replace(/^\s*(?:chat\s+title|title)\s*[:\-]\s*/i, "")
+        .replace(/^[\s"'`*_#]+|[\s"'`*_#]+$/g, "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 44);
+}
+
+async function requestChatTitle(userMessage, assistantMessage, chatId) {
+    const idToken = await auth.currentUser?.getIdToken();
+    if (!idToken) return null;
+
+    const response = await fetch(BACKEND_URL, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${idToken}`
+        },
+        body: JSON.stringify({
+            action: "title",
+            chatId,
+            titleContext: {
+                user: userMessage.slice(0, 1_600),
+                assistant: assistantMessage.slice(0, 1_600)
+            }
+        })
+    });
+
+    if (!response.ok) return null;
+    const result = await response.json().catch(() => null);
+    return normalizeChatTitle(result?.title);
+}
+
+async function persistGeneratedChatTitle(chatId, messageId, title, userId) {
+    const normalizedTitle = normalizeChatTitle(title);
+    if (!normalizedTitle || currentUserId !== userId) return;
+
+    const messages = messagesByChatId.get(chatId) || [];
+    const titleMessage = messages.find(message => message.id === messageId);
+    if (!titleMessage) return;
+
+    titleMessage.chatTitle = normalizedTitle;
+    refreshChatSessions();
+    renderChatList();
+
+    try {
+        await updateDoc(
+            doc(db, "Users", userId, "Chats", messageId),
+            { chatTitle: normalizedTitle }
+        );
+    } catch (error) {
+        console.warn("AI chat title could not be saved.", error);
+    }
 }
 
 function refreshChatSessions() {
@@ -1204,6 +1255,11 @@ async function aiReply(text, image, savedMessageId, signal, chatId) {
         const currentMessageWasSaved = Boolean(
             savedMessageId && currentMessages.some(message => message.id === savedMessageId)
         );
+        const firstUserTurns = currentMessages.filter(message => message.sender === "user").length;
+        const hasAssistantReply = currentMessages.some(message => message.sender === "ai");
+        const shouldGenerateChatTitle = chatId !== LEGACY_CHAT_ID
+            && firstUserTurns === 1
+            && !hasAssistantReply;
 
         const currentHistory = currentMessages.slice(-12).map(message => {
             const isCurrentPrompt = message.id === savedMessageId;
@@ -1390,7 +1446,24 @@ async function aiReply(text, image, savedMessageId, signal, chatId) {
         // SAVE AI RESPONSE
         // -----------------------------
 
-        await saveMessage(reply, "ai", chatId);
+        const assistantMessageId = await saveMessage(reply, "ai", chatId);
+
+        if (shouldGenerateChatTitle && assistantMessageId) {
+            const titleUserId = currentUserId;
+            requestChatTitle(text, reply, chatId)
+                .then(title => {
+                    if (title) {
+                        return persistGeneratedChatTitle(
+                            chatId,
+                            assistantMessageId,
+                            title,
+                            titleUserId
+                        );
+                    }
+                    return null;
+                })
+                .catch(error => console.warn("AI chat title generation failed.", error));
+        }
 
         console.log("Cadence AI: Reply delivered.");
 
@@ -1574,6 +1647,7 @@ async function sendMessage({ animateFromComposer = false } = {}) {
             content.className = "message-content";
 
             content.innerHTML = safeMarkdownHtml(text);
+            renderMathExpressions(content);
 
             message.appendChild(content);
 
