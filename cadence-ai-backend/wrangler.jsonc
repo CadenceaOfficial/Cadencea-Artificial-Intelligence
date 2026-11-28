@@ -13,8 +13,22 @@
 	"upload_source_maps": true,
 	"vars": {
 		"FIREBASE_PROJECT_ID": "cadence-ai-37cdf",
-		"ALLOWED_ORIGINS": "https://cadenceaofficial.github.io,https://cadence-ai-37cdf.web.app,https://cadence-ai-37cdf.firebaseapp.com,http://localhost:5500,http://127.0.0.1:5500,http://localhost:5173,http://127.0.0.1:5173"
+		"ALLOWED_ORIGINS": "https://cadenceaofficial.github.io,https://cadence-ai-37cdf.web.app,https://cadence-ai-37cdf.firebaseapp.com"
 	},
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "LIMITER",
+				"class_name": "UsageLimiter"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": ["UsageLimiter"]
+		}
+	],
 	"compatibility_flags": [
 		"nodejs_compat",
 		"enable_request_signal"

@@ -8,6 +8,9 @@ const MAX_HISTORY_CHARS = 60_000;
 const MAX_CHAT_MEMORY_CHARS = 16_000;
 const DAILY_LIMIT = 50;
 const PROVIDER_TIMEOUT_MS = 30_000;
+const MAX_SIGNING_KEYS_RESPONSE_BYTES = 128 * 1024;
+const MAX_PROVIDER_RESPONSE_BYTES = 2 * 1024 * 1024;
+const QUOTA_DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 let signingKeysCache = null;
 let signingKeysExpiresAt = 0;
@@ -71,7 +74,7 @@ async function getFirebaseSigningKeys(forceRefresh = false) {
       throw new Error(`Firebase signing key request failed (${response.status})`);
     }
 
-    const data = await response.json();
+    const data = JSON.parse(await readBodyWithinLimit(response, MAX_SIGNING_KEYS_RESPONSE_BYTES));
     if (!Array.isArray(data.keys) || data.keys.length === 0) {
       throw new Error("Firebase signing keys were missing");
     }
@@ -137,9 +140,10 @@ async function verifyFirebaseIdToken(token, projectId) {
     typeof claims.sub !== "string" ||
     claims.sub.length === 0 ||
     claims.sub.length > 128 ||
-    !Number.isFinite(claims.exp) || claims.exp <= now - 60 ||
-    !Number.isFinite(claims.iat) || claims.iat > now + 60 ||
-    !Number.isFinite(claims.auth_time) || claims.auth_time > now + 60
+    !Number.isFinite(claims.exp) || claims.exp <= now ||
+    !Number.isFinite(claims.iat) || claims.iat > now + 60 || claims.iat >= claims.exp ||
+    !Number.isFinite(claims.auth_time) || claims.auth_time > now + 60 ||
+    claims.auth_time > claims.iat + 60
   ) {
     return null;
   }
@@ -245,14 +249,14 @@ async function postJson(url, init, providerName, requestSignal) {
     ...init,
     signal,
   });
-  const payload = await response.json().catch(() => null);
-
   if (!response.ok) {
     console.warn(`${providerName} returned HTTP ${response.status}`);
+    await response.body?.cancel();
     return null;
   }
 
-  return payload;
+  const rawPayload = await readBodyWithinLimit(response, MAX_PROVIDER_RESPONSE_BYTES);
+  return JSON.parse(rawPayload);
 }
 
 function extractOpenAiText(payload) {
@@ -464,24 +468,25 @@ async function createChatTitle(body, userId, env, request, origin, allowedOrigin
 
   const today = new Date().toISOString().slice(0, 10);
   const cachedTitleKey = `chat-title:${userId}:${chatId}`;
-  const dailyTitleUsageKey = `chat-title-usage:${userId}:${today}`;
-  let titleCount;
+  let reservationId;
   try {
-    const [cachedTitle, storedCount] = await Promise.all([
-      env.USAGE.get(cachedTitleKey),
-      env.USAGE.get(dailyTitleUsageKey),
-    ]);
+    const cachedTitle = await env.USAGE.get(cachedTitleKey);
     if (cachedTitle) {
       return jsonResponse({ title: cachedTitle }, 200, origin, allowedOrigins);
     }
-    titleCount = Number.parseInt(storedCount || "0", 10);
-    if (!Number.isSafeInteger(titleCount) || titleCount < 0) titleCount = 0;
   } catch (error) {
-    console.error("Chat title usage lookup failed", error instanceof Error ? error.name : "unknown error");
+    console.error("Chat title lookup failed", error instanceof Error ? error.name : "unknown error");
     return jsonResponse({ error: "Chat title service is temporarily unavailable" }, 503, origin, allowedOrigins);
   }
 
-  if (titleCount >= DAILY_LIMIT) {
+  try {
+    reservationId = await reserveDailyQuota(env, userId, "titles", today);
+  } catch (error) {
+    console.error("Chat title quota reservation failed", error instanceof Error ? error.name : "unknown error");
+    return jsonResponse({ error: "Chat title service is temporarily unavailable" }, 503, origin, allowedOrigins);
+  }
+
+  if (!reservationId) {
     return jsonResponse({ error: "Daily chat title limit reached" }, 429, origin, allowedOrigins);
   }
 
@@ -496,6 +501,27 @@ async function createChatTitle(body, userId, env, request, origin, allowedOrigin
       env,
       request.signal,
     );
+
+    if (request.signal.aborted) {
+      return new Response(null, {
+        status: 499,
+        headers: responseHeaders(origin, allowedOrigins),
+      });
+    }
+
+    const title = normalizeChatTitle(generatedTitle);
+    if (!title) {
+      return jsonResponse({ error: "No chat title was returned" }, 502, origin, allowedOrigins);
+    }
+
+    await commitDailyQuota(env, userId, "titles", today, reservationId);
+    reservationId = null;
+    try {
+      await env.USAGE.put(cachedTitleKey, title, { expirationTtl: 31_536_000 });
+    } catch (error) {
+      console.error("Chat title cache update failed", error instanceof Error ? error.name : "unknown error");
+    }
+    return jsonResponse({ title }, 200, origin, allowedOrigins);
   } catch (error) {
     if (request.signal.aborted) {
       return new Response(null, {
@@ -505,30 +531,155 @@ async function createChatTitle(body, userId, env, request, origin, allowedOrigin
     }
     console.error("Chat title generation failed", error instanceof Error ? error.name : "unknown error");
     return jsonResponse({ error: "Chat title generation failed" }, 502, origin, allowedOrigins);
+  } finally {
+    if (reservationId) {
+      await releaseDailyQuota(env, userId, "titles", today, reservationId);
+    }
   }
+}
 
-  if (request.signal.aborted) {
-    return new Response(null, {
-      status: 499,
-      headers: responseHeaders(origin, allowedOrigins),
-    });
-  }
+async function quotaRequest(env, userId, action, bucket, day, reservationId) {
+  if (!env.LIMITER) throw new Error("Usage limiter is unavailable");
+  const id = env.LIMITER.idFromName(userId);
+  const stub = env.LIMITER.get(id);
+  const response = await stub.fetch("https://usage-limiter.internal/v1/quota", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action, bucket, day, reservationId }),
+  });
+  if (!response.ok) throw new Error(`Usage limiter returned HTTP ${response.status}`);
+  return response.json();
+}
 
-  const title = normalizeChatTitle(generatedTitle);
-  if (!title) {
-    return jsonResponse({ error: "No chat title was returned" }, 502, origin, allowedOrigins);
-  }
+async function reserveDailyQuota(env, userId, bucket, day) {
+  const result = await quotaRequest(env, userId, "reserve", bucket, day);
+  return result.allowed ? result.reservationId : null;
+}
 
+async function commitDailyQuota(env, userId, bucket, day, reservationId) {
+  await quotaRequest(env, userId, "commit", bucket, day, reservationId);
+}
+
+async function releaseDailyQuota(env, userId, bucket, day, reservationId) {
   try {
-    await Promise.all([
-      env.USAGE.put(cachedTitleKey, title, { expirationTtl: 31_536_000 }),
-      env.USAGE.put(dailyTitleUsageKey, String(titleCount + 1), { expirationTtl: 172_800 }),
-    ]);
+    await quotaRequest(env, userId, "release", bucket, day, reservationId);
   } catch (error) {
-    console.error("Chat title cache update failed", error instanceof Error ? error.name : "unknown error");
+    console.error("Usage quota release failed", error instanceof Error ? error.name : "unknown error");
+  }
+}
+
+async function readBodyWithinLimit(request, maxBytes) {
+  if (!request.body) return "";
+
+  const reader = request.body.getReader();
+  const chunks = [];
+  let byteLength = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      byteLength += value.byteLength;
+      if (byteLength > maxBytes) {
+        await reader.cancel();
+        throw new RangeError("Request is too large");
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
   }
 
-  return jsonResponse({ title }, 200, origin, allowedOrigins);
+  const body = new Uint8Array(byteLength);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(body);
+}
+
+export class UsageLimiter {
+  constructor(state) {
+    this.state = state;
+  }
+
+  async fetch(request) {
+    if (request.method !== "POST" || new URL(request.url).pathname !== "/v1/quota") {
+      return new Response("Not found", { status: 404 });
+    }
+
+    let input;
+    try {
+      input = await request.json();
+    } catch {
+      return new Response("Invalid request", { status: 400 });
+    }
+
+    const { action, bucket, day, reservationId } = input || {};
+    if (
+      !["reserve", "commit", "release"].includes(action) ||
+      !["messages", "titles"].includes(bucket) ||
+      typeof day !== "string" || !QUOTA_DAY_PATTERN.test(day) ||
+      (action !== "reserve" && (typeof reservationId !== "string" || reservationId.length > 64))
+    ) {
+      return new Response("Invalid request", { status: 400 });
+    }
+
+    if (action === "reserve" && reservationId !== undefined) {
+      return new Response("Invalid request", { status: 400 });
+    }
+
+    const result = await this.state.storage.transaction(async (transaction) => {
+      let usage = await transaction.get("daily-usage");
+      if (!usage || usage.day < day) {
+        usage = {
+          day,
+          messages: { count: 0, reservations: [] },
+          titles: { count: 0, reservations: [] },
+        };
+      }
+
+      if (usage.day > day) {
+        return action === "reserve" ? { allowed: false } : { ok: true };
+      }
+
+      const bucketUsage = usage[bucket];
+      if (
+        !bucketUsage ||
+        !Number.isSafeInteger(bucketUsage.count) ||
+        bucketUsage.count < 0 ||
+        !Array.isArray(bucketUsage.reservations) ||
+        bucketUsage.reservations.some((value) => typeof value !== "string")
+      ) {
+        usage[bucket] = { count: 0, reservations: [] };
+      }
+
+      const state = usage[bucket];
+      let response;
+      if (action === "reserve") {
+        if (state.count >= DAILY_LIMIT) {
+          response = { allowed: false };
+        } else {
+          const id = crypto.randomUUID();
+          state.count += 1;
+          state.reservations.push(id);
+          response = { allowed: true, reservationId: id };
+        }
+      } else {
+        const reservationIndex = state.reservations.indexOf(reservationId);
+        if (reservationIndex !== -1) {
+          state.reservations.splice(reservationIndex, 1);
+          if (action === "release") state.count = Math.max(0, state.count - 1);
+        }
+        response = { ok: true };
+      }
+
+      await transaction.put("daily-usage", usage);
+      return response;
+    });
+
+    return Response.json(result, { headers: { "Cache-Control": "no-store" } });
+  }
 }
 
 export default {
@@ -577,12 +728,12 @@ export default {
 
     let body;
     try {
-      const rawBody = await request.text();
-      if (new TextEncoder().encode(rawBody).byteLength > MAX_REQUEST_BYTES) {
+      const rawBody = await readBodyWithinLimit(request, MAX_REQUEST_BYTES);
+      body = JSON.parse(rawBody);
+    } catch (error) {
+      if (error instanceof RangeError) {
         return jsonResponse({ error: "Request is too large" }, 413, origin, allowedOrigins);
       }
-      body = JSON.parse(rawBody);
-    } catch {
       return jsonResponse(
         { error: "Request body must be valid JSON" },
         400,
@@ -657,19 +808,12 @@ export default {
       );
     }
 
-    if (!env.USAGE) {
-      return jsonResponse({ error: "Usage tracking is unavailable" }, 503, origin, allowedOrigins);
-    }
-
     const today = new Date().toISOString().slice(0, 10);
-    const usageKey = `usage:${userId}:${today}`;
-    let usageCount;
+    let reservationId;
     try {
-      const storedCount = await env.USAGE.get(usageKey);
-      usageCount = Number.parseInt(storedCount || "0", 10);
-      if (!Number.isSafeInteger(usageCount) || usageCount < 0) usageCount = 0;
+      reservationId = await reserveDailyQuota(env, userId, "messages", today);
     } catch (error) {
-      console.error("Usage lookup failed", error instanceof Error ? error.name : "unknown error");
+      console.error("Usage quota reservation failed", error instanceof Error ? error.name : "unknown error");
       return jsonResponse(
         { error: "Usage tracking is temporarily unavailable" },
         503,
@@ -678,7 +822,7 @@ export default {
       );
     }
 
-    if (usageCount >= DAILY_LIMIT) {
+    if (!reservationId) {
       return jsonResponse({ error: "Daily message limit reached" }, 429, origin, allowedOrigins);
     }
 
@@ -698,16 +842,24 @@ Maintain context from the current conversation and saved chat memory when provid
     try {
       reply = await getReply(history, image, systemPrompt, env, request.signal);
     } catch (error) {
+      await releaseDailyQuota(env, userId, "messages", today, reservationId);
       if (request.signal.aborted) {
         return new Response(null, {
           status: 499,
           headers: responseHeaders(origin, allowedOrigins),
         });
       }
-      throw error;
+      console.error("AI response failed", error instanceof Error ? error.name : "unknown error");
+      return jsonResponse(
+        { error: "AI providers are unavailable. Please try again later." },
+        502,
+        origin,
+        allowedOrigins,
+      );
     }
 
     if (request.signal.aborted) {
+      await releaseDailyQuota(env, userId, "messages", today, reservationId);
       return new Response(null, {
         status: 499,
         headers: responseHeaders(origin, allowedOrigins),
@@ -715,6 +867,7 @@ Maintain context from the current conversation and saved chat memory when provid
     }
 
     if (!reply) {
+      await releaseDailyQuota(env, userId, "messages", today, reservationId);
       return jsonResponse(
         { error: "AI providers are unavailable. Please try again later." },
         502,
@@ -724,9 +877,9 @@ Maintain context from the current conversation and saved chat memory when provid
     }
 
     try {
-      await env.USAGE.put(usageKey, String(usageCount + 1), { expirationTtl: 172800 });
+      await commitDailyQuota(env, userId, "messages", today, reservationId);
     } catch (error) {
-      console.error("Usage update failed", error instanceof Error ? error.name : "unknown error");
+      console.error("Usage quota commit failed", error instanceof Error ? error.name : "unknown error");
     }
 
     return jsonResponse({ reply }, 200, origin, allowedOrigins);

@@ -4,12 +4,17 @@
   "description": "",
   "main": "script.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npm run test:rules && npm --prefix cadence-ai-backend test -- --run",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-cadence-security \"node --test security-tests/firestore.rules.test.cjs\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "firebase": "^12.16.0"
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
+    "firebase": "^12.19.0"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "^1.14.7"
   }
 }

@@ -6,23 +6,48 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == userId;
     }
 
+    function validProfile(data) {
+      return data.keys().hasAll(["name", "email", "photo", "lastSeenAt"])
+        && data.name is string
+        && data.name.size() <= 120
+        && data.email is string
+        && data.email.size() <= 254
+        && data.photo is string
+        && data.photo.size() <= 2048
+        && data.lastSeenAt is timestamp
+        && data.lastSeenAt == request.time;
+    }
+
     function validChatMessage() {
       return request.resource.data.keys().hasAll(["text", "sender", "time"])
         && request.resource.data.keys().hasOnly(["text", "sender", "time"])
         && request.resource.data.text is string
-        && request.resource.data.text.size() <= 900000
+        && request.resource.data.text.size() <= 24000
         && request.resource.data.sender in ["user", "ai"]
         && request.resource.data.time == request.time;
     }
 
     match /Users/{userId} {
-      allow read, create, update: if ownsUserData(userId);
+      allow read: if ownsUserData(userId);
+      allow create: if ownsUserData(userId)
+        && request.resource.data.keys().hasOnly(["name", "email", "photo", "lastSeenAt"])
+        && validProfile(request.resource.data);
+      allow update: if ownsUserData(userId)
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(["name", "email", "photo", "lastSeenAt"])
+        && validProfile(request.resource.data);
 
       match /Chats/{chatId} {
         allow get, list: if ownsUserData(userId);
         allow create: if ownsUserData(userId) && validChatMessage();
         allow update: if ownsUserData(userId)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["chatTitle"])
+          && request.resource.data.keys().hasOnly(["text", "sender", "time", "chatTitle"])
+          && request.resource.data.text is string
+          && request.resource.data.text.size() <= 24000
+          && request.resource.data.sender in ["user", "ai"]
+          && request.resource.data.time is timestamp
+          && request.resource.data.time == resource.data.time
           && request.resource.data.chatTitle is string
           && request.resource.data.chatTitle.size() <= 44;
       }
