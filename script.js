@@ -468,6 +468,7 @@ function normalizeAssistantMarkup(source) {
             .replace(/\\{4}(?=\[(?:\d+(?:\.\d+)?(?:pt|em|ex))\])/g, "\\\\")
             .replace(/\\{4}(?=\r?\n)/g, "\\\\")
             .replace(/\\{2}(?=[,;:!])/g, "\\")
+            .replace(/\\{1,2}_(?=\s*\{)/g, "_")
             .replace(
                 /\\\\(?=(?:frac|binom|sum|prod|qquad|quad|displaystyle|textstyle|text|phantom|mathrm|operatorname|mathbb|mathcal|times|cdot|sqrt|left|right|begin|end|alpha|beta|theta|pi|le|ge|neq|infty|partial|cdots|ldots|rightarrow|sin|cos|tan|log|lim)\b)/g,
                 "\\"
