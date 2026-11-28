@@ -445,9 +445,51 @@ function renderMathExpressions(element) {
     });
 }
 
+function normalizeAssistantMarkup(source) {
+    const codeSegments = [];
+    let normalized = source.replace(
+        /(?:\x60{3,}[\s\S]*?\x60{3,}|~{3,}[\s\S]*?~{3,}|\x60[^\n]*?\x60)/g,
+        code => {
+            const placeholder = "CADENCEACODESEGMENT" + codeSegments.length + "END";
+            codeSegments.push({ placeholder, code });
+            return placeholder;
+        }
+    );
+
+    normalized = normalized
+        .replace(/\\{1,2}\[([\s\S]*?)\\{1,2}\]/g, (_match, expression) => "$$" + expression + "$$")
+        .replace(/\\{1,2}\(([\s\S]*?)\\{1,2}\)/g, (_match, expression) => "$" + expression + "$")
+        .replace(/^[ \t]*\\[ \t]*$/gm, "");
+
+    const mathExpressions = [];
+    normalized = normalized.replace(/\$\$[\s\S]+?\$\$|\$(?!\$)[^\n$]+\$/g, expression => {
+        const placeholder = "CADENCEAMATHEXPRESSION" + mathExpressions.length + "END";
+        const normalizedExpression = expression
+            .replace(/\\{4}(?=\[(?:\d+(?:\.\d+)?(?:pt|em|ex))\])/g, "\\\\")
+            .replace(/\\{4}(?=\r?\n)/g, "\\\\")
+            .replace(/\\{2}(?=[,;:!])/g, "\\")
+            .replace(
+                /\\\\(?=(?:frac|binom|sum|prod|qquad|quad|displaystyle|textstyle|text|phantom|mathrm|operatorname|mathbb|mathcal|times|cdot|sqrt|left|right|begin|end|alpha|beta|theta|pi|le|ge|neq|infty|partial|cdots|ldots|rightarrow|sin|cos|tan|log|lim)\b)/g,
+                "\\"
+            );
+        mathExpressions.push({ placeholder, expression: normalizedExpression });
+        return placeholder;
+    });
+
+    normalized = normalized.replace(/\\([\\\x60*_{}\[\]()#+.!>|~-])/g, "$1");
+    normalized = mathExpressions.reduce(
+        (text, { placeholder, expression }) => text.replaceAll(placeholder, expression),
+        normalized
+    );
+    return codeSegments.reduce(
+        (text, { placeholder, code }) => text.replaceAll(placeholder, code),
+        normalized
+    );
+}
+
 function safeMarkdownHtml(text) {
 
-    const source = String(text || "");
+    const source = normalizeAssistantMarkup(String(text || ""));
 
     if (!window.marked?.parse) {
         const escaped = document.createElement("span");
